@@ -1,5 +1,5 @@
 # Minimax
-Generic Minimax algorithm for 2 player games. There are 3 games currently implemented:
+Generic [Minimax](https://en.wikipedia.org/wiki/Minimax) algorithm for 2 player games of [Perfect Information](https://en.wikipedia.org/wiki/Perfect_information). There are 3 games currently implemented:
 - Konane (Mount & Blade II: Bannerlord board game)
 - MuTorere (Mount & Blade II: Bannerlord board game)
 - BaghChal (Mount & Blade II: Bannerlord board game)
@@ -9,4 +9,4 @@ Generic Minimax algorithm for 2 player games. There are 3 games currently implem
 - Works for games with cycles.
 - Takes the shortest path for the win, but the longest path for the loss.
 - Uses around 1.2GB of RAM.
-- Doesn't work for games with chance elements. For that I'll probably implement another version of the algorithm which I'll call Expectiminimax.
+- It currently does not work for games with imperfect information or chance elements (dice/card games). I'll probably code that in another project.
