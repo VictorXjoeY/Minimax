@@ -3,6 +3,7 @@
 #include <type_traits>
 #include <chrono>
 #include <thread>
+#include <vector>
 
 /* Common. */
 #include <Common.hpp>
@@ -80,13 +81,13 @@ MoveType get_ai_move(AIType &ai, const GameType &game, int player, long long tim
 
 	// Printing real thinking time.
 	if (t <= chrono::milliseconds(timeout)) {
-		printf(COLOR_GREEN "(%d / %ld.%03lds) " COLOR_WHITE, depth, t.count() / 1000, t.count() % 1000);
+		printf(COLOR_GREEN "(%d / %lld.%03llds) " COLOR_WHITE, depth, t.count() / 1000ll, t.count() % 1000ll);
 	}
 	else if (t <= 2 * chrono::milliseconds(timeout)) {
-		printf(COLOR_YELLOW "(%d / %ld.%03lds) " COLOR_WHITE, depth, t.count() / 1000, t.count() % 1000);
+		printf(COLOR_YELLOW "(%d / %lld.%03llds) " COLOR_WHITE, depth, t.count() / 1000ll, t.count() % 1000ll);
 	}
 	else {
-		printf(COLOR_RED "(%d / %ld.%03lds) " COLOR_WHITE, depth, t.count() / 1000, t.count() % 1000);
+		printf(COLOR_RED "(%d / %lld.%03llds) " COLOR_WHITE, depth, t.count() / 1000ll, t.count() % 1000ll);
 	}
 
 	// Printing if the AI is playing optimally or not.

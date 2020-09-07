@@ -8,7 +8,12 @@ using namespace std;
 
 /* Base class for Game moves. */
 class GameMove {
+protected:
+	GameMove() = default;
+
 public:
+	virtual ~GameMove() = default;
+
 	virtual operator string() const = 0;
 };
 
@@ -19,6 +24,8 @@ private:
 	vector<StateType> states;
 
 protected:
+	Game() = default;
+
 	/* Returns the current game state converted to State. */
 	virtual StateType get_current_state_() const = 0;
 
@@ -37,6 +44,8 @@ public:
 	/* Using typedef to be able to retrieve State type and Move type after declaration. */
 	using state_type = StateType;
 	using move_type = MoveType;
+
+	virtual ~Game() = default;
 
 	/* Current player. */
 	virtual int get_current_player() const = 0;
