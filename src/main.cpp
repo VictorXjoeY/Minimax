@@ -19,10 +19,7 @@
 using namespace std;
 
 /* Game constants. */
-constexpr int KONANE = 1;
-constexpr int MUTORERE = 2;
-constexpr int BAGHCHAL = 3;
-constexpr int TICTACTOE = 4;
+const vector<string> GAMES = {"Konane", "MuTorere", "BaghChal", "TicTacToe"};
 
 /* Game option constants. */
 constexpr int PLAYER_VS_PLAYER = 1;
@@ -31,22 +28,21 @@ constexpr int CPU_VS_PLAYER = 3;
 constexpr int CPU_VS_CPU = 4;
 
 /* Gets the game. */
-int get_game() {
+string get_game_name() {
 	int game_op;
 
-	printf("(1) Konane\n");
-	printf("(2) MuTorere\n");
-	printf("(3) BaghChal\n");
-	printf("(4) TicTacToe\n");
+	for (int i = 0; i < GAMES.size(); i++) {
+		printf("(%d) %s\n", i + 1, GAMES[i].c_str());
+	}
 
 	do {
 		printf("Game: ");
 		scanf("%d", &game_op);
-	} while (game_op < KONANE or game_op > TICTACTOE);
+	} while (game_op < 1 or game_op > GAMES.size());
 
 	printf("\n");
 	
-	return game_op;
+	return GAMES[game_op - 1];
 }
 
 /* Gets the game mode. */
@@ -216,20 +212,23 @@ int main() {
 	printf(COLOR_WHITE);
 
 	// Choosing game to play.
-	int game_op = get_game();
+	string game_name = get_game_name();
 
 	// Running game.
-	if (game_op == KONANE) {
+	if (game_name == "Konane") {
 		game_loop(KonaneGame());
 	}
-	else if (game_op == MUTORERE) {
+	else if (game_name == "MuTorere") {
 		game_loop(MuTorereGame());
 	}
-	else if (game_op == BAGHCHAL) {
+	else if (game_name == "BaghChal") {
 		game_loop(BaghChalGame());
 	}
-	else if (game_op == TICTACTOE) {
+	else if (game_name == "TicTacToe") {
 		game_loop(TicTacToeGame());
+	}
+	else {
+		printf("%s has not been implemented.\n", game_name.c_str());
 	}
 
 	// Reseting.
