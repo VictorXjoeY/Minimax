@@ -155,6 +155,8 @@ public:
 		in_stack.reserve(IN_STACK_RESERVE);
 	}
 
+	~Minimax() = default;
+
 	/* Returns the best move obtained with minimax given a time limit in milliseconds. */
 	pair<OptimalMove, int> get_move(const GameType &game_, long long timeout) {
 		chrono::milliseconds t;

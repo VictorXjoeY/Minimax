@@ -1,5 +1,27 @@
 #pragma once
 
+#ifdef _WIN32
+
+#define COLOR_BLACK ""
+#define COLOR_RED ""
+#define COLOR_GREEN ""
+#define COLOR_YELLOW ""
+#define COLOR_BLUE ""
+#define COLOR_MAGENTA ""
+#define COLOR_CYAN ""
+#define COLOR_WHITE ""
+#define COLOR_BRIGHT_BLACK ""
+#define COLOR_BRIGHT_RED ""
+#define COLOR_BRIGHT_GREEN ""
+#define COLOR_BRIGHT_YELLOW ""
+#define COLOR_BRIGHT_BLUE ""
+#define COLOR_BRIGHT_MAGENTA ""
+#define COLOR_BRIGHT_CYAN ""
+#define COLOR_BRIGHT_WHITE ""
+#define COLOR_RESET ""
+
+#else
+
 #define COLOR_BLACK "\033[30m"
 #define COLOR_RED "\033[31m"
 #define COLOR_GREEN "\033[32m"
@@ -17,3 +39,5 @@
 #define COLOR_BRIGHT_CYAN "\033[96m"
 #define COLOR_BRIGHT_WHITE "\033[97m"
 #define COLOR_RESET "\033[0m"
+
+#endif
