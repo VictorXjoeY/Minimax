@@ -1,9 +1,9 @@
 # Minimax
 Generic [Minimax](https://en.wikipedia.org/wiki/Minimax) algorithm for 2 player games of [Perfect Information](https://en.wikipedia.org/wiki/Perfect_information). There are 3 games currently implemented:
-- Konane (Mount & Blade II: Bannerlord board game)
-- MuTorere (Mount & Blade II: Bannerlord board game)
-- BaghChal (Mount & Blade II: Bannerlord board game)
-- Tic-tac-toe
+- [Konane](https://mountandblade.fandom.com/wiki/Board_Games) (Mount & Blade II: Bannerlord board game)
+- [MuTorere](https://mountandblade.fandom.com/wiki/Board_Games) (Mount & Blade II: Bannerlord board game)
+- [BaghChal](https://mountandblade.fandom.com/wiki/Board_Games) (Mount & Blade II: Bannerlord board game)
+- [Tic-tac-toe](https://en.wikipedia.org/wiki/Tic-tac-toe)
 
 # Notes
 - Works for any 2 player games implemented as a derived class from Game<StateType, MoveType>.
