@@ -13,7 +13,7 @@ constexpr int KonaneGame::DIR[2][4];
 
 /* Returns the number of pawns remaining on the board. */
 int KonaneGame::count_pawns() const {
-	return __builtin_popcountll(board & ((1ll << (N * N)) - 1));
+	return __builtin_popcountll(board);
 }
 
 /* Returns what is in cell (x, y). */
@@ -35,9 +35,14 @@ void KonaneGame::reset(const KonaneCell &c) {
 	board &= ~(1ll << (long long)convert_cell(c));
 }
 
-/* Toggles the current player. */
-void KonaneGame::toggle_player() {
-	board ^= (1ll << (N * N));
+/* Returns true if the next move is the first move of the match. */
+bool KonaneGame::is_first_turn() const {
+	return count_pawns() == N * N;
+}
+
+/* Returns true if the next move is the second move of the match. */
+bool KonaneGame::is_second_turn() const {
+	return count_pawns() == N * N - 1;
 }
 
 /* Returns if the move (x, y) at the start of the game is a valid move. */
@@ -105,7 +110,7 @@ vector<KonaneMove> KonaneGame::get_starting_moves() const {
 /* ---------- PROTECTED ---------- */
 
 /* Returns the current game state converted to State. */
-long long KonaneGame::get_current_state_() const {
+long long KonaneGame::get_state_() const {
 	return board;
 }
 
@@ -150,27 +155,40 @@ void KonaneGame::make_move_(const KonaneMove &m_) {
 			}
 		}
 	}
+}
 
-	// Toggle player.
-	toggle_player();
+/* Returns all the current possible moves. */
+vector<KonaneMove> KonaneGame::get_moves_() const {
+	vector<KonaneMove> moves;
+
+	if (is_first_turn() or is_second_turn()) {
+		return get_starting_moves();
+	}
+
+	for (int xi = 0; xi < N; xi++) {
+		for (int yi = 0; yi < N; yi++) {
+			if (test(KonaneCell(xi, yi)) == get_player()) { // For every pawn of the current player.
+				for (int d = 0; d < 4; d++) { // For every direction.
+					int xf = xi + 2 * DIR[0][d];
+					int yf = yi + 2 * DIR[1][d];
+
+					while (is_inside(KonaneCell(xf, yf))) {
+						if (is_valid_move(KonaneMove(xi, yi, xf, yf))) {
+							moves.push_back(KonaneMove(xi, yi, xf, yf));
+						}
+
+						xf += 2 * DIR[0][d];
+						yf += 2 * DIR[1][d];
+					}
+				}
+			}
+		}
+	}
+
+	return moves;
 }
 
 /* ---------- PUBLIC ---------- */
-
-/* Current player. */
-int KonaneGame::get_current_player() const {
-	return (board >> (N * N)) & 1ll ? BLACK : WHITE;
-}
-
-/* Returns true if the next move is the first move of the match. */
-bool KonaneGame::is_first_turn() const {
-	return count_pawns() == N * N;
-}
-
-/* Returns true if the next move is the second move of the match. */
-bool KonaneGame::is_second_turn() const {
-	return count_pawns() == N * N - 1;
-}
 
 /* Returns if the move (xi, yi) -> (xf, yf) is a valid move. */
 bool KonaneGame::is_valid_move(const KonaneMove &m_) const {
@@ -180,7 +198,7 @@ bool KonaneGame::is_valid_move(const KonaneMove &m_) const {
 		return is_valid_starting_move(m.ci);
 	}
 
-	if (test(m.ci) != get_current_player()) { // Can't move a pawn that is not yours.
+	if (test(m.ci) != get_player()) { // Can't move a pawn that is not yours.
 		return false;
 	}
 
@@ -198,7 +216,7 @@ bool KonaneGame::is_valid_move(const KonaneMove &m_) const {
 		while (m.ci.y != m.cf.y) {
 			m.ci.y += DIR[1][d];
 
-			if (test(m.ci) != get_enemy(get_current_player())) { // Has to jump over an enemy.
+			if (test(m.ci) != get_enemy()) { // Has to jump over an enemy.
 				return false;
 			}
 
@@ -218,7 +236,7 @@ bool KonaneGame::is_valid_move(const KonaneMove &m_) const {
 		while (m.ci.x != m.cf.x) {
 			m.ci.x += DIR[0][d];
 
-			if (test(m.ci) != get_enemy(get_current_player())) { // Has to jump over an enemy.
+			if (test(m.ci) != get_enemy()) { // Has to jump over an enemy.
 				return false;
 			}
 
@@ -234,37 +252,6 @@ bool KonaneGame::is_valid_move(const KonaneMove &m_) const {
 
 	// Can only move horizontally or vertically.
 	return false;
-}
-
-/* Returns all the current possible moves. */
-vector<KonaneMove> KonaneGame::get_moves() const {
-	vector<KonaneMove> moves;
-
-	if (is_first_turn() or is_second_turn()) {
-		return get_starting_moves();
-	}
-
-	for (int xi = 0; xi < N; xi++) {
-		for (int yi = 0; yi < N; yi++) {
-			if (test(KonaneCell(xi, yi)) == get_current_player()) { // For every pawn of the current player.
-				for (int d = 0; d < 4; d++) { // For every direction.
-					int xf = xi + 2 * DIR[0][d];
-					int yf = yi + 2 * DIR[1][d];
-
-					while (is_inside(KonaneCell(xf, yf))) {
-						if (is_valid_move(KonaneMove(xi, yi, xf, yf))) {
-							moves.push_back(KonaneMove(xi, yi, xf, yf));
-						}
-
-						xf += 2 * DIR[0][d];
-						yf += 2 * DIR[1][d];
-					}
-				}
-			}
-		}
-	}
-
-	return moves;
 }
 
 /* Returns a move inputed by the player. */
@@ -289,19 +276,9 @@ KonaneMove KonaneGame::get_player_move() const {
 	return KonaneMove(xi, yi, xf, yf);
 }
 
-/* Returns a value between -1 and 1 indicating how probable it is for the first player to win (1.0) or the other player to win (-1.0). */
-double KonaneGame::evaluate() {
-	return 0.0;
-}
-
-/* Returns if the game is over (current player can't make any more moves). */
-bool KonaneGame::is_game_over() const {
-	return get_moves().empty();
-}
-
 /* Returns the board for printing. */
 KonaneGame::operator string() const {
-	vector<KonaneMove> moves = get_moves();
+	vector<KonaneMove> moves = get_moves_();
 	long long highlighted = 0;
 	string str;
 

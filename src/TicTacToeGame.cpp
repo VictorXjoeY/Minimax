@@ -8,11 +8,6 @@
 
 /* ---------- PRIVATE ---------- */
 
-/* Toggles the current player. */
-void TicTacToeGame::toggle_player() {
-	player = -player;
-}
-
 bool TicTacToeGame::is_game_over_() const {
 	int x, y;
 
@@ -78,7 +73,7 @@ bool TicTacToeGame::is_game_over_() const {
 /* ---------- PROTECTED ---------- */
 
 /* Returns the current game state converted to State. */
-int TicTacToeGame::get_current_state_() const {
+int TicTacToeGame::get_state_() const {
 	int state = 0;
 	int pow = 1;
 
@@ -99,21 +94,12 @@ int TicTacToeGame::get_current_state_() const {
 		}
 	}
 
-	// Current player.
-	if (player == CROSS) {
-		state += 0 * pow;
-	}
-	else {
-		state += 1 * pow;
-	}
-
 	return state;
 }
 
 /* Initializes a new game. This function should be called at the end of initialize_game_() of the derived classes. */
 void TicTacToeGame::initialize_game_() {
 	memset(board, NONE, sizeof(board));
-	player = CROSS;
 	Game<int, TicTacToeMove>::initialize_game_();
 }
 
@@ -137,36 +123,15 @@ void TicTacToeGame::load_game_(const int &state_) {
 			state /= 3;
 		}
 	}
-
-	// Current player.
-	if (state % 3 == 0) {
-		player = CROSS;
-	}
-	else if (state % 3 == 1) {
-		player = CIRCLE;
-	}
 }
 
 /* Performs a move. Assumes that is_valid_move(m) is true. TODO: Remove assumption that is_valid_move(m) is true. */
 void TicTacToeGame::make_move_(const TicTacToeMove &m_) {
-	board[m_.c.x][m_.c.y] = player;
-	toggle_player();
-}
-
-/* ---------- PUBLIC ---------- */
-
-/* Current player. */
-int TicTacToeGame::get_current_player() const {
-	return player;
-}
-
-/* Returns if the move (x, y) is a valid move. */
-bool TicTacToeGame::is_valid_move(const TicTacToeMove &m_) const {
-	return is_inside(m_.c) and board[m_.c.x][m_.c.y] == NONE;
+	board[m_.c.x][m_.c.y] = get_player();
 }
 
 /* Returns all the current possible moves. */
-vector<TicTacToeMove> TicTacToeGame::get_moves() const {
+vector<TicTacToeMove> TicTacToeGame::get_moves_() const {
 	vector<TicTacToeMove> moves;
 
 	if (is_game_over_()) {
@@ -184,6 +149,22 @@ vector<TicTacToeMove> TicTacToeGame::get_moves() const {
 	return moves;
 }
 
+/* Returns the winner. */
+int TicTacToeGame::get_winner_() const {
+	if (is_game_over_()) {
+		return Game<int, TicTacToeMove>::get_winner_();
+	}
+
+	return NONE;
+}
+
+/* ---------- PUBLIC ---------- */
+
+/* Returns if the move (x, y) is a valid move. */
+bool TicTacToeGame::is_valid_move(const TicTacToeMove &m_) const {
+	return is_inside(m_.c) and board[m_.c.x][m_.c.y] == NONE;
+}
+
 /* Returns a move inputed by the player. */
 TicTacToeMove TicTacToeGame::get_player_move() const {
 	int x, y;
@@ -195,16 +176,6 @@ TicTacToeMove TicTacToeGame::get_player_move() const {
 	printf("\n");
 
 	return TicTacToeMove(x, y);
-}
-
-/* Returns a value between -1 and 1 indicating how probable it is for the current player to win (1.0) or the other player to win (-1.0). */
-double TicTacToeGame::evaluate() {
-	return 0.0;
-}
-
-/* Returns if the game is over (current player can't make any more moves). */
-bool TicTacToeGame::is_game_over() const {
-	return get_moves().empty();
 }
 
 /* Returns the board for printing. */

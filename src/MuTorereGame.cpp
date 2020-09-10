@@ -11,11 +11,6 @@
 
 /* ---------- PRIVATE ---------- */
 
-/* Toggles the current player. */
-void MuTorereGame::toggle_player() {
-	player = get_enemy(player);
-}
-
 /* Returns the position which is empty. */
 int MuTorereGame::get_empty_position() {
 	for (int p = 0; p < N + 1; p++) {
@@ -31,7 +26,7 @@ int MuTorereGame::get_empty_position() {
 /* ---------- PROTECTED ---------- */
 
 /* Returns the current game state converted to State. */
-int MuTorereGame::get_current_state_() const {
+int MuTorereGame::get_state_() const {
 	int state = 0;
 	int pow = 1;
 
@@ -49,13 +44,6 @@ int MuTorereGame::get_current_state_() const {
 		pow *= 3;
 	}
 
-	if (player == WHITE) {
-		state += 0 * pow;
-	}
-	else {
-		state += 1 * pow;
-	}
-
 	return state;
 }
 
@@ -71,7 +59,6 @@ void MuTorereGame::initialize_game_() {
 
 	board[N] = NONE;
 
-	player = WHITE;
 	Game<int, MuTorereMove>::initialize_game_();
 }
 
@@ -92,48 +79,15 @@ void MuTorereGame::load_game_(const int &state_) {
 
 		state /= 3;
 	}
-
-	if (state % 3 == 0) {
-		player = WHITE;
-	}
-	else {
-		player = BLACK;
-	}
 }
 
 /* Performs a move. Assumes that is_valid_move(m) is true. TODO: Remove assumption that is_valid_move(m) is true. */
 void MuTorereGame::make_move_(const MuTorereMove &move) {
 	swap(board[move.pos], board[get_empty_position()]);
-	toggle_player();
-}
-
-/* ---------- PUBLIC ---------- */
-
-/* Current player. */
-int MuTorereGame::get_current_player() const {
-	return player;
-}
-
-/* Returns true if the movement is valid. */
-bool MuTorereGame::is_valid_move(const MuTorereMove &move) const {
-	if (board[move.pos] != player) { // Can't move a pawn if it doesn't belong to the current player.
-		return false;
-	}
-
-	if (move.pos == N) { // Can always move from the center.
-		return true;
-	}
-
-	if (board[N] == NONE) { // Can move to the center if adjacent to an enemy. 
-		return board[(move.pos + N - 1) % N] == get_enemy(player) or board[(move.pos + 1) % N] == get_enemy(player);
-	}
-
-	// Can move around the circle if adjacent to an empty space.
-	return board[(move.pos + N - 1) % N] == NONE or board[(move.pos + 1) % N] == NONE;
 }
 
 /* Returns all the possible moves for the current state of the game. */
-vector<MuTorereMove> MuTorereGame::get_moves() const {
+vector<MuTorereMove> MuTorereGame::get_moves_() const {
 	vector<MuTorereMove> moves;
 
 	for (int p = 0; p < N + 1; p++) {
@@ -143,6 +97,26 @@ vector<MuTorereMove> MuTorereGame::get_moves() const {
 	}
 
 	return moves;
+}
+
+/* ---------- PUBLIC ---------- */
+
+/* Returns true if the movement is valid. */
+bool MuTorereGame::is_valid_move(const MuTorereMove &move) const {
+	if (board[move.pos] != get_player()) { // Can't move a pawn if it doesn't belong to the current player.
+		return false;
+	}
+
+	if (move.pos == N) { // Can always move from the center.
+		return true;
+	}
+
+	if (board[N] == NONE) { // Can move to the center if adjacent to an enemy. 
+		return board[(move.pos + N - 1) % N] == get_enemy() or board[(move.pos + 1) % N] == get_enemy();
+	}
+
+	// Can move around the circle if adjacent to an empty space.
+	return board[(move.pos + N - 1) % N] == NONE or board[(move.pos + 1) % N] == NONE;
 }
 
 /* Returns a move inputed by the player. */
@@ -156,16 +130,6 @@ MuTorereMove MuTorereGame::get_player_move() const {
 	printf("\n");
 
 	return p;
-}
-
-/* Returns a value between -1 and 1 indicating how probable it is for the first player to win (1.0) or the other player to win (-1.0). */
-double MuTorereGame::evaluate() {
-	return 0.0;
-}
-
-/* Returns if the game is over (current player can't make any more moves). */
-bool MuTorereGame::is_game_over() const {
-	return get_moves().empty();
 }
 
 MuTorereGame::operator string() const {

@@ -70,7 +70,7 @@ int get_game_mode() {
 
 /* Returns a move given by the AI. */
 template <class AIType, class GameType, class MoveType = typename GameType::move_type>
-MoveType get_ai_move(AIType &ai, const GameType &game, int player, long long timeout = 2000) {
+MoveType get_ai_move(AIType &ai, const GameType &game, long long timeout = 1000) {
 	typename AIType::OptimalMove ans;
 	int depth;
 
@@ -81,6 +81,9 @@ MoveType get_ai_move(AIType &ai, const GameType &game, int player, long long tim
 
 	// Pretending that the AI is thinking for at least timeout milliseconds.
 	this_thread::sleep_for(max(chrono::milliseconds(0), chrono::milliseconds(timeout) - t));
+
+	// Printing move.
+	printf("%s\n", string(ans.move).c_str());
 
 	// Printing real thinking time.
 	if (t <= chrono::milliseconds(timeout)) {
@@ -95,15 +98,26 @@ MoveType get_ai_move(AIType &ai, const GameType &game, int player, long long tim
 
 	// Printing if the AI is playing optimally or not.
 	if (ans.is_optimal) {
-		int winner = ans.winner == AIType::PLAYER_MAX ? 1 : 2;
-		string winner_color = player == winner ? COLOR_GREEN : COLOR_RED;
-		printf("CPU is playing " COLOR_GREEN "optimally %s(Player %d wins in at most %d moves)" COLOR_WHITE ": ", winner_color.c_str(), winner, ans.turn - game.get_turn());
+		printf("CPU is playing " COLOR_GREEN "optimally\n" COLOR_WHITE);
+
+		if (ans.winner.has_value()) {
+			if (ans.winner.value() != GameType::PLAYER_NONE) {
+				string winner_color = game.get_player() == ans.winner.value() ? COLOR_GREEN : COLOR_RED;
+				printf("%s(Player %d will win in at most %d moves)\n" COLOR_WHITE, winner_color.c_str(), (3 + ans.winner.value()) % 3, ans.turn - game.get_turn());
+			}
+			else {
+				printf("(The game will end in a draw in at most %d moves)\n", ans.turn - game.get_turn());
+			}
+		}
+		else {
+			printf("(The game can go on forever!)\n");
+		}
 	}
 	else {
-		printf("CPU might be playing " COLOR_RED "non optimally" COLOR_WHITE ": ");
+		printf("CPU might be playing " COLOR_RED "non optimally\n" COLOR_WHITE);
 	}
 
-	printf("%s\n\n", string(ans.move).c_str());
+	printf("\n");
 
 	return ans.move;
 }
@@ -118,9 +132,20 @@ void print_possible_moves(const GameType &game) {
 	}
 }
 
+/* Prints "Player 1" or "Player 2". */
+template <class GameType>
+void print_player(int player) {
+	if (player == GameType::PLAYER_MAX) {
+		printf(COLOR_RED "Player 1" COLOR_WHITE);
+	}
+	else {
+		printf(COLOR_BLUE "Player 2" COLOR_WHITE);
+	}
+}
+
 /* Prints what should be printed every iteration of the game loop. */
 template <class GameType>
-void game_loop_print(const GameType &game, int player) {
+void game_loop_print(const GameType &game) {
 	// Printing the board.
 	printf("%s\n", string(game).c_str());
 	printf(COLOR_BRIGHT_BLACK "========================\n\n" COLOR_WHITE);
@@ -128,21 +153,18 @@ void game_loop_print(const GameType &game, int player) {
 	// Printing possible moves.
 	printf(COLOR_CYAN "Possible moves:\n" COLOR_WHITE);
 	print_possible_moves(game);
+	printf("\n");
 
 	// Printing who's turn it is.
-	if (player == 1) {
-		printf(COLOR_RED "\nPlayer 1" COLOR_WHITE " moves: ");
-		fflush(stdout);
-	}
-	else {
-		printf(COLOR_BLUE "\nPlayer 2" COLOR_WHITE " moves: ");
-		fflush(stdout);
-	}
+	print_player<GameType>(game.get_player());
+	printf(" moves: ");
+	fflush(stdout);
 }
 
 /* Returns true if its the player's turn. */
-bool is_player_turn(int player, int op) {
-	if (player == 1) {
+template <class GameType>
+bool is_player_turn(const GameType &game, int op) {
+	if (game.get_player() == GameType::PLAYER_MAX) {
 		return op == PLAYER_VS_PLAYER or op == PLAYER_VS_CPU;
 	}
 	else {
@@ -158,23 +180,19 @@ void game_loop(GameType game) {
 
 	// Initializing.
 	int op = get_game_mode();
-	int player = 1;
 
 	// Game loop.
 	while (!game.is_game_over()) {
 		// Printing the current state of the game.
-		game_loop_print(game, player);
+		game_loop_print(game);
 		
 		// Move input.
-		if (is_player_turn(player, op)) { // Human.
+		if (is_player_turn(game, op)) { // Human.
 			game.make_move(game.get_player_move());
 		}
 		else { // CPU.
-			game.make_move(get_ai_move(ai, game, player));
+			game.make_move(get_ai_move(ai, game));
 		}
-
-		// Next turn.
-		player = player == 1 ? 2 : 1;
 	}
 
 	// Printing the final board.
@@ -182,11 +200,14 @@ void game_loop(GameType game) {
 	printf(COLOR_BRIGHT_BLACK "========================\n\n" COLOR_WHITE);
 
 	// Printing winner.
-	if (player == 1) {
-		printf(COLOR_BLUE "Player 2" COLOR_WHITE " won!\n");
+	assert(game.get_winner().has_value());
+
+	if (game.get_winner().value() == GameType::PLAYER_NONE) {
+		printf("Draw!\n");
 	}
 	else {
-		printf(COLOR_RED "Player 1" COLOR_WHITE " won!\n");
+		print_player<GameType>(game.get_winner().value());
+		printf(" won!\n");
 	}
 }
 

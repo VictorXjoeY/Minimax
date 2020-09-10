@@ -58,17 +58,16 @@ public:
 };
 
 class BaghChalGame : public Game<long long, BaghChalMove> {
-public:
+private:
 	/* Circle has N cells and 1 in the center. */
 	static constexpr int N = 5;
 	static constexpr int D = 5;
 
 	/* Cell state constants. */
-	static constexpr int NONE = 0;
-	static constexpr int WHITE = 1;
-	static constexpr int BLACK = -1;
+	static constexpr int WHITE = Game<long long, BaghChalMove>::PLAYER_MAX;
+	static constexpr int BLACK = Game<long long, BaghChalMove>::PLAYER_MIN;
+	static constexpr int NONE = Game<long long, BaghChalMove>::PLAYER_NONE;
 
-private:
 	// UP, RIGHT, DOWN, LEFT, UPRIGHT, DOWNRIGHT, DOWNLEFT, UPLEFT
 	static constexpr int UP = 0;
 	static constexpr int RIGHT = 1;
@@ -113,10 +112,6 @@ private:
 
 	int board[N][N]; // Board.
 	int sheeps; // Sheeps to be placed on the board.
-	int player; // Current player.
-
-	/* Toggles the current player. */
-	void toggle_player();
 
 	/* Returns true if WHITE player is still placing sheeps on the board. */
 	bool is_first_phase() const;
@@ -125,14 +120,14 @@ private:
 	int sheep_count() const;
 
 	/* Returns the number of wolves currently stuck. */
-	int stuck_wolves_();
+	int stuck_wolves_count() const;
 
 	/* Auxiliar function for the string conversion. */
 	void fill(char mat[D * (N - 1) + 1][D * (N - 1) + 1], int x, int y, int d) const;
 
 protected:
 	/* Returns the current game state converted to State. */
-	long long get_current_state_() const override;
+	long long get_state_() const override;
 
 	/* Initializes a new game. This function should be called at the end of initialize_game_() of the derived classes. */
 	void initialize_game_() override;
@@ -140,40 +135,40 @@ protected:
 	/* Loads the game given a State. */
 	void load_game_(const long long &) override;
 
+	/* Returns true if its a valid first phase move. */
+	bool is_valid_first_phase_move_(const BaghChalMove &) const;
+
 	/* Performs a first phase move. Assumes that is_valid_move(m) is true. TODO: Remove assumption that is_valid_move(m) is true. */
 	void make_first_phase_move_(const BaghChalCell &);
 
 	/* Performs a move. Assumes that is_valid_move(m) is true. TODO: Remove assumption that is_valid_move(m) is true. */
 	void make_move_(const BaghChalMove &) override;
 
+	/* Returns all the possible first phase moves for WHITE. */
+	vector<BaghChalMove> get_first_phase_moves_() const;
+
+	/* Returns all the possible moves for the current state of the game. */
+	vector<BaghChalMove> get_moves_for_(int) const;
+
+	/* Returns all the possible moves for the current state of the game. */
+	vector<BaghChalMove> get_moves_() const override;
+
+	/* Returns the winner. */
+	using Game<long long, BaghChalMove>::get_winner_;
+
 public:
 	BaghChalGame() {
 		initialize_game_();
 	}
 
-	/* Current player. */
-	int get_current_player() const override;
-
-	/* Returns true if its a valid first phase move. */
-	bool is_valid_first_phase_move(const BaghChalMove &) const;
-
 	/* Returns true if the movement is valid. */
 	bool is_valid_move(const BaghChalMove &) const override;
-
-	/* Returns all the possible first phase moves for WHITE. */
-	vector<BaghChalMove> get_first_phase_moves() const;
-
-	/* Returns all the possible moves for the current state of the game. */
-	vector<BaghChalMove> get_moves() const override;
 
 	/* Returns a move inputed by the player. */
 	BaghChalMove get_player_move() const override;
 
 	/* Returns a value between -1 and 1 indicating how probable it is for the first player to win (1.0) or the other player to win (-1.0). */
-	double evaluate() override;
-
-	/* Returns if the game is over (current player can't make any more moves). */
-	bool is_game_over() const override;
+	double evaluate() const override;
 
 	/* Returns the board for printing. */
 	operator string() const override;

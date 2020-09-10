@@ -56,32 +56,26 @@ public:
 };
 
 class KonaneGame : public Game<long long, KonaneMove> {
-public:
+private:
 	/* Board is N x N. */
 	static constexpr int N = 6;
 
 	/* Cell state constants. */
-	static constexpr int NONE = 0;
-	static constexpr int WHITE = 1;
-	static constexpr int BLACK = -1;
+	static constexpr int WHITE = Game<long long, KonaneMove>::PLAYER_MAX;
+	static constexpr int BLACK = Game<long long, KonaneMove>::PLAYER_MIN;
+	static constexpr int NONE = Game<long long, KonaneMove>::PLAYER_NONE;
 
-	/* Returns if the coordinate is inside the board. */
-	static bool is_inside(const KonaneCell &c) {
-		return 0 <= c.x and c.x < N and 0 <= c.y and c.y < N;
-	}
-
-	/* Returns the enemy color. */
-	static int get_enemy(int p) {
-		return -p;
-	}
-
-private:
 	/* Direction constants. */
 	static constexpr int UP = 0;
 	static constexpr int DOWN = 1;
 	static constexpr int LEFT = 2;
 	static constexpr int RIGHT = 3;
 	static constexpr int DIR[2][4] = {{-1, 1, 0, 0}, {0, 0, -1, 1}};
+
+	/* Returns if the coordinate is inside the board. */
+	static bool is_inside(const KonaneCell &c) {
+		return 0 <= c.x and c.x < N and 0 <= c.y and c.y < N;
+	}
 
 	/* From (x, y) to position. */
 	static int convert_cell(const KonaneCell &c) {
@@ -107,8 +101,11 @@ private:
 	/* Resets cell (x, y). */
 	void reset(const KonaneCell &);
 
-	/* Toggles the current player. */
-	void toggle_player();
+	/* Returns true if the next move is the first move of the match. */
+	bool is_first_turn() const;
+
+	/* Returns true if the next move is the second move of the match. */
+	bool is_second_turn() const;
 
 	/* Returns if the move (x, y) at the start of the game is a valid move. */
 	bool is_valid_starting_move(const KonaneCell &) const;
@@ -121,7 +118,7 @@ private:
 
 protected:
 	/* Returns the current game state converted to State. */
-	long long get_current_state_() const override;
+	long long get_state_() const override;
 
 	/* Initializes a new game. This function should be called at the end of initialize_game_() of the derived classes. */
 	void initialize_game_() override;
@@ -132,34 +129,25 @@ protected:
 	/* Performs a move. Assumes that is_valid_move(m) is true. TODO: Remove assumption that is_valid_move(m) is true. */
 	void make_move_(const KonaneMove &m_) override;
 
+	/* Returns all the current possible moves. */
+	vector<KonaneMove> get_moves_() const override;
+
+	/* Returns the winner. */
+	using Game<long long, KonaneMove>::get_winner_;
+
 public:
 	KonaneGame() {
 		initialize_game_();
 	}
 
-	/* Current player. */
-	int get_current_player() const override;
-
-	/* Returns true if the next move is the first move of the match. */
-	bool is_first_turn() const;
-
-	/* Returns true if the next move is the second move of the match. */
-	bool is_second_turn() const;
-
 	/* Returns if the move (xi, yi) -> (xf, yf) is a valid move. */
 	bool is_valid_move(const KonaneMove &m_) const override;
-
-	/* Returns all the current possible moves. */
-	vector<KonaneMove> get_moves() const override;
 
 	/* Returns a move inputed by the player. */
 	KonaneMove get_player_move() const override;
 
-	/* Returns a value between -1 and 1 indicating how probable it is for the current player to win (1.0) or the other player to win (-1.0). */
-	double evaluate() override;
-
-	/* Returns if the game is over (current player can't make any more moves). */
-	bool is_game_over() const override;
+	/* Returns a value between -1 and 1 indicating how probable it is for the first player to win (1.0) or the other player to win (-1.0). */
+	using Game<long long, KonaneMove>::evaluate;
 
 	/* Returns the board for printing. */
 	operator string() const override;

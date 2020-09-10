@@ -39,26 +39,20 @@ public:
 };
 
 class TicTacToeGame : public Game<int, TicTacToeMove> {
-public:
+private:
 	/* Board is N x N. */
 	static constexpr int N = 3;
 
 	/* Cell state constants. */
-	static constexpr int NONE = 0;
-	static constexpr int CROSS = 1;
-	static constexpr int CIRCLE = -1;
+	static constexpr int CROSS = Game<int, TicTacToeMove>::PLAYER_MAX;
+	static constexpr int CIRCLE = Game<int, TicTacToeMove>::PLAYER_MIN;
+	static constexpr int NONE = Game<int, TicTacToeMove>::PLAYER_NONE;
 
 	/* Returns if the coordinate is inside the board. */
 	static bool is_inside(const TicTacToeCell &c) {
 		return 0 <= c.x and c.x < N and 0 <= c.y and c.y < N;
 	}
 
-	/* Returns the enemy color. */
-	static int get_enemy(int p) {
-		return -p;
-	}
-
-private:
 	static char get_player_piece(int p) {
 		if (p == CROSS) {
 			return 'x';
@@ -72,17 +66,13 @@ private:
 	}
 
 	int board[N][N];
-	int player; // Current player.
-
-	/* Toggles the current player. */
-	void toggle_player();
 
 	/* Checks if a row, column or diagonal has been filled. */
 	bool is_game_over_() const;
 
 protected:
 	/* Returns the current game state converted to State. */
-	int get_current_state_() const override;
+	int get_state_() const override;
 
 	/* Initializes a new game. This function should be called at the end of initialize_game_() of the derived classes. */
 	void initialize_game_() override;
@@ -93,28 +83,25 @@ protected:
 	/* Performs a move. Assumes that is_valid_move(m) is true. TODO: Remove assumption that is_valid_move(m) is true. */
 	void make_move_(const TicTacToeMove &m_) override;
 
+	/* Returns all the current possible moves. */
+	vector<TicTacToeMove> get_moves_() const override;
+
+	/* Returns the winner. */
+	int get_winner_() const override;
+
 public:
 	TicTacToeGame() {
 		initialize_game_();
 	}
 
-	/* Current player. */
-	int get_current_player() const override;
-
 	/* Returns if the move (x, y) is a valid move. */
 	bool is_valid_move(const TicTacToeMove &m_) const override;
-
-	/* Returns all the current possible moves. */
-	vector<TicTacToeMove> get_moves() const override;
 
 	/* Returns a move inputed by the player. */
 	TicTacToeMove get_player_move() const override;
 
-	/* Returns a value between -1 and 1 indicating how probable it is for the current player to win (1.0) or the other player to win (-1.0). */
-	double evaluate() override;
-
-	/* Returns if the game is over (current player can't make any more moves). */
-	bool is_game_over() const override;
+	/* Returns a value between -1 and 1 indicating how probable it is for the first player to win (1.0) or the other player to win (-1.0). */
+	using Game<int, TicTacToeMove>::evaluate;
 
 	/* Returns the board for printing. */
 	operator string() const override;
