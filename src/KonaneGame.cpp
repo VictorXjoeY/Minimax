@@ -162,11 +162,6 @@ int KonaneGame::get_current_player() const {
 	return (board >> (N * N)) & 1ll ? BLACK : WHITE;
 }
 
-/* Returns winner if there is one. */
-int KonaneGame::get_winner() const {
-	return is_game_over() ? get_enemy(get_current_player()) : NONE;
-}
-
 /* Returns true if the next move is the first move of the match. */
 bool KonaneGame::is_first_turn() const {
 	return count_pawns() == N * N;

@@ -140,9 +140,6 @@ public:
 	/* Current player. */
 	int get_current_player() const override;
 
-	/* Returns winner if there is one. */
-	int get_winner() const;
-
 	/* Returns true if the next move is the first move of the match. */
 	bool is_first_turn() const;
 

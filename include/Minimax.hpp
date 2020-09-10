@@ -54,15 +54,13 @@ private:
 	OptimalMove solve(double player, double alpha, double beta, int height) {
 		vector<MoveType> moves = game.get_moves();
 
-		if (moves.empty()) { // TODO: Replace this with game.is_over().
-			// printf("height = %d\n", height);
+		if (moves.empty()) { // TODO: Replace this with game.is_over(). Replace -player with game.winner() (or similar)
 			return OptimalMove(MoveType(), -player, true, game.get_turn());
 		}
 
 		// If we are trying to calculate a state which is still open (in stack) we have hit a cycle and we return 0.
 		if (in_stack.count(game.get_current_state())) {
-			// printf("height = %d\n", height);
-			return OptimalMove(moves[0], 0.0, true, game.get_turn()); // isOptimal = true ???
+			return OptimalMove(moves[0], 0.0, true, game.get_turn()); // isOptimal is true because there are no more possibilities for this subtree.
 		}
 
 		// If we are trying to calculate a state which was already calculated higher up on the tree then return its value.

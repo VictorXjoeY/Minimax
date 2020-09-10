@@ -14,6 +14,7 @@
 #include <KonaneGame.hpp>
 #include <MuTorereGame.hpp>
 #include <BaghChalGame.hpp>
+#include <TicTacToeGame.hpp>
 
 using namespace std;
 
@@ -21,6 +22,7 @@ using namespace std;
 constexpr int KONANE = 1;
 constexpr int MUTORERE = 2;
 constexpr int BAGHCHAL = 3;
+constexpr int TICTACTOE = 4;
 
 /* Game option constants. */
 constexpr int PLAYER_VS_PLAYER = 1;
@@ -35,11 +37,12 @@ int get_game() {
 	printf("(1) Konane\n");
 	printf("(2) MuTorere\n");
 	printf("(3) BaghChal\n");
+	printf("(4) TicTacToe\n");
 
 	do {
 		printf("Game: ");
 		scanf("%d", &game_op);
-	} while (game_op < 1 or game_op > 3);
+	} while (game_op < KONANE or game_op > TICTACTOE);
 
 	printf("\n");
 	
@@ -94,7 +97,7 @@ MoveType get_ai_move(AIType &ai, const GameType &game, int player, long long tim
 	if (ans.is_optimal) {
 		int winner = ans.winner == AIType::PLAYER_MAX ? 1 : 2;
 		string winner_color = player == winner ? COLOR_GREEN : COLOR_RED;
-		printf("CPU is playing " COLOR_GREEN "optimally %s(Player %d wins in %d moves)" COLOR_WHITE ": ", winner_color.c_str(), winner, ans.turn - game.get_turn());
+		printf("CPU is playing " COLOR_GREEN "optimally %s(Player %d wins in at most %d moves)" COLOR_WHITE ": ", winner_color.c_str(), winner, ans.turn - game.get_turn());
 	}
 	else {
 		printf("CPU might be playing " COLOR_RED "non optimally" COLOR_WHITE ": ");
@@ -203,6 +206,9 @@ int main() {
 	}
 	else if (game_op == BAGHCHAL) {
 		game_loop(BaghChalGame());
+	}
+	else if (game_op == TICTACTOE) {
+		game_loop(TicTacToeGame());
 	}
 
 	// Reseting.

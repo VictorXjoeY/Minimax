@@ -357,12 +357,6 @@ double BaghChalGame::evaluate() {
 /* Returns if the game is over (current player can't make any more moves). */
 bool BaghChalGame::is_game_over() const {
 	return get_moves().empty();
-
-	if (sheep_count() <= 15) { // BLACK won.
-		return true;
-	}
-
-	return player == BLACK and get_moves().empty(); // WHITE won.
 }
 
 /* Returns the board for printing. */
