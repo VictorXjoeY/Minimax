@@ -47,21 +47,6 @@ int MuTorereGame::get_state_() const {
 	return state;
 }
 
-/* Initializes a new game. This function should be called at the end of initialize_game_() of the derived classes. */
-void MuTorereGame::initialize_game_() {
-	for (int p = 0; p < N / 2; p++) {
-		board[p] = WHITE;
-	}
-
-	for (int p = N / 2; p < N; p++) {
-		board[p] = BLACK;
-	}
-
-	board[N] = NONE;
-
-	Game<int, MuTorereMove>::initialize_game_();
-}
-
 /* Loads the game given a State. */
 void MuTorereGame::load_game_(const int &state_) {
 	int state = state_;
@@ -100,6 +85,20 @@ vector<MuTorereMove> MuTorereGame::get_moves_() const {
 }
 
 /* ---------- PUBLIC ---------- */
+
+MuTorereGame::MuTorereGame() {
+	for (int p = 0; p < N / 2; p++) {
+		board[p] = WHITE;
+	}
+
+	for (int p = N / 2; p < N; p++) {
+		board[p] = BLACK;
+	}
+
+	board[N] = NONE;
+
+	Game<int, MuTorereMove>::initialize_game_();
+}
 
 /* Returns true if the movement is valid. */
 bool MuTorereGame::is_valid_move(const MuTorereMove &move) const {

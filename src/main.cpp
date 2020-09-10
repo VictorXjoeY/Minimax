@@ -64,6 +64,20 @@ int get_game_mode() {
 	return op;
 }
 
+/* Returns 1 if it's the first player or 2 if it's the second player. */
+template <class GameType>
+int get_player_number(int player) {
+	if (player == GameType::PLAYER_MAX) {
+		return 1;
+	}
+
+	if (player == GameType::PLAYER_MIN) {
+		return 2;
+	}
+
+	return 0;
+}
+
 /* Returns a move given by the AI. */
 template <class AIType, class GameType, class MoveType = typename GameType::move_type>
 MoveType get_ai_move(AIType &ai, const GameType &game, long long timeout = 1000) {
@@ -99,10 +113,10 @@ MoveType get_ai_move(AIType &ai, const GameType &game, long long timeout = 1000)
 		if (ans.winner.has_value()) {
 			if (ans.winner.value() != GameType::PLAYER_NONE) {
 				string winner_color = game.get_player() == ans.winner.value() ? COLOR_GREEN : COLOR_RED;
-				printf("%s(Player %d will win in at most %d moves)\n" COLOR_WHITE, winner_color.c_str(), (3 + ans.winner.value()) % 3, ans.turn - game.get_turn());
+				printf("%s(Player %d will win in at most %d moves)\n" COLOR_WHITE, winner_color.c_str(), get_player_number<GameType>(ans.winner.value()), ans.turn - game.get_turn());
 			}
 			else {
-				printf("(The game will end in a draw in at most %d moves)\n", ans.turn - game.get_turn());
+				printf("(The game will end in a " COLOR_YELLOW "draw" COLOR_WHITE " in at most %d moves)\n", ans.turn - game.get_turn());
 			}
 		}
 		else {
@@ -131,11 +145,14 @@ void print_possible_moves(const GameType &game) {
 /* Prints "Player 1" or "Player 2". */
 template <class GameType>
 void print_player(int player) {
-	if (player == GameType::PLAYER_MAX) {
+	if (get_player_number<GameType>(player) == 1) {
 		printf(COLOR_RED "Player 1" COLOR_WHITE);
 	}
-	else {
+	else if (get_player_number<GameType>(player) == 2) {
 		printf(COLOR_BLUE "Player 2" COLOR_WHITE);
+	}
+	else {
+		printf("Player ?");
 	}
 }
 
@@ -199,7 +216,7 @@ void game_loop(GameType game) {
 	assert(game.get_winner().has_value());
 
 	if (game.get_winner().value() == GameType::PLAYER_NONE) {
-		printf("Draw!\n");
+		printf(COLOR_YELLOW "Draw!\n" COLOR_WHITE);
 	}
 	else {
 		print_player<GameType>(game.get_winner().value());

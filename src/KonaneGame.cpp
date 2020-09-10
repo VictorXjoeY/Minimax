@@ -114,12 +114,6 @@ long long KonaneGame::get_state_() const {
 	return board;
 }
 
-/* Initializes a new game. This function should be called at the end of initialize_game_() of the derived classes. */
-void KonaneGame::initialize_game_() {
-	board = (1ll << (N * N)) - 1; // All 36 cells are filled in with pawns. White starts.
-	Game<long long, KonaneMove>::initialize_game_();
-}
-
 /* Loads the game given a State. */
 void KonaneGame::load_game_(const long long &state) {
 	board = state;
@@ -189,6 +183,11 @@ vector<KonaneMove> KonaneGame::get_moves_() const {
 }
 
 /* ---------- PUBLIC ---------- */
+
+KonaneGame::KonaneGame() {
+	board = (1ll << (N * N)) - 1; // All 36 cells are filled in with pawns. White starts.
+	Game<long long, KonaneMove>::initialize_game_();
+}
 
 /* Returns if the move (xi, yi) -> (xf, yf) is a valid move. */
 bool KonaneGame::is_valid_move(const KonaneMove &m_) const {

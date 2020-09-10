@@ -125,30 +125,27 @@ private:
 	/* Auxiliar function for the string conversion. */
 	void fill(char mat[D * (N - 1) + 1][D * (N - 1) + 1], int x, int y, int d) const;
 
-protected:
-	/* Returns the current game state converted to State. */
-	long long get_state_() const override;
-
-	/* Initializes a new game. This function should be called at the end of initialize_game_() of the derived classes. */
-	void initialize_game_() override;
-
-	/* Loads the game given a State. */
-	void load_game_(const long long &) override;
-
 	/* Returns true if its a valid first phase move. */
 	bool is_valid_first_phase_move_(const BaghChalMove &) const;
 
 	/* Performs a first phase move. Assumes that is_valid_move(m) is true. TODO: Remove assumption that is_valid_move(m) is true. */
 	void make_first_phase_move_(const BaghChalCell &);
 
-	/* Performs a move. Assumes that is_valid_move(m) is true. TODO: Remove assumption that is_valid_move(m) is true. */
-	void make_move_(const BaghChalMove &) override;
-
 	/* Returns all the possible first phase moves for WHITE. */
 	vector<BaghChalMove> get_first_phase_moves_() const;
 
 	/* Returns all the possible moves for the current state of the game. */
 	vector<BaghChalMove> get_moves_for_(int) const;
+
+protected:
+	/* Returns the current game state converted to State. */
+	long long get_state_() const override;
+
+	/* Loads the game given a State. */
+	void load_game_(const long long &) override;
+
+	/* Performs a move. Assumes that is_valid_move(m) is true. TODO: Remove assumption that is_valid_move(m) is true. */
+	void make_move_(const BaghChalMove &) override;
 
 	/* Returns all the possible moves for the current state of the game. */
 	vector<BaghChalMove> get_moves_() const override;
@@ -157,9 +154,7 @@ protected:
 	using Game<long long, BaghChalMove>::get_winner_;
 
 public:
-	BaghChalGame() {
-		initialize_game_();
-	}
+	BaghChalGame();
 
 	/* Returns true if the movement is valid. */
 	bool is_valid_move(const BaghChalMove &) const override;

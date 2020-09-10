@@ -42,9 +42,6 @@ protected:
 	/* Returns the current game state converted to State. */
 	int get_state_() const override;
 
-	/* Initializes a new game. This function should be called at the end of initialize_game_() of the derived classes. */
-	void initialize_game_() override;
-
 	/* Loads the game given a State. */
 	void load_game_(const int &) override;
 
@@ -58,9 +55,7 @@ protected:
 	using Game<int, MuTorereMove>::get_winner_;
 
 public:
-	MuTorereGame() {
-		initialize_game_();
-	}
+	MuTorereGame();
 
 	/* Returns true if the movement is valid. */
 	bool is_valid_move(const MuTorereMove &) const override;

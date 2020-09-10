@@ -120,14 +120,11 @@ protected:
 	/* Returns the current game state converted to State. */
 	long long get_state_() const override;
 
-	/* Initializes a new game. This function should be called at the end of initialize_game_() of the derived classes. */
-	void initialize_game_() override;
-
 	/* Loads the game given a State. */
-	void load_game_(const long long &state) override;
+	void load_game_(const long long &) override;
 
 	/* Performs a move. Assumes that is_valid_move(m) is true. TODO: Remove assumption that is_valid_move(m) is true. */
-	void make_move_(const KonaneMove &m_) override;
+	void make_move_(const KonaneMove &) override;
 
 	/* Returns all the current possible moves. */
 	vector<KonaneMove> get_moves_() const override;
@@ -136,12 +133,10 @@ protected:
 	using Game<long long, KonaneMove>::get_winner_;
 
 public:
-	KonaneGame() {
-		initialize_game_();
-	}
+	KonaneGame();
 
 	/* Returns if the move (xi, yi) -> (xf, yf) is a valid move. */
-	bool is_valid_move(const KonaneMove &m_) const override;
+	bool is_valid_move(const KonaneMove &) const override;
 
 	/* Returns a move inputed by the player. */
 	KonaneMove get_player_move() const override;

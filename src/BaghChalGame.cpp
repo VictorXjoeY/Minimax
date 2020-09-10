@@ -61,82 +61,6 @@ void BaghChalGame::fill(char mat[D * (N - 1) + 1][D * (N - 1) + 1], int x, int y
 	}
 }
 
-/* ---------- PROTECTED ---------- */
-
-/* Returns the current game state converted to State. */
-long long BaghChalGame::get_state_() const {
-	long long state = 0;
-	long long pow = 1;
-
-	// Board.
-	for (int x = 0; x < N; x++) {
-		for (int y = 0; y < N; y++) {
-			if (board[x][y] == WHITE) {
-				state += 0 * pow;
-			}
-			else if (board[x][y] == BLACK) {
-				state += 1 * pow;
-			}
-			else {
-				state += 2 * pow;
-			}
-
-			pow *= 3;
-		}
-	}
-
-	// Remaining sheeps on hand.
-	int sheeps_ = sheeps;
-
-	for (int i = 0; i < 3; i++) {
-		state += (sheeps_ % 3) * pow;
-		sheeps_ /= 3;
-		pow *= 3;
-	}
-
-	return state;
-}
-
-/* Initializes a new game. This function should be called at the end of initialize_game_() of the derived classes. */
-void BaghChalGame::initialize_game_() {
-	memset(board, NONE, sizeof(board));
-	board[0][0] = board[0][N - 1] = board[N - 1][0] = board[N - 1][N - 1] = BLACK;
-	sheeps = 20;
-	Game<long long, BaghChalMove>::initialize_game_();
-}
-
-/* Loads the game given a State. */
-void BaghChalGame::load_game_(const long long &state_) {
-	long long state = state_;
-
-	// Board.
-	for (int x = 0; x < N; x++) {
-		for (int y = 0; y < N; y++) {
-			if (state % 3 == 0) {
-				board[x][y] = WHITE;
-			}
-			else if (state % 3 == 1) {
-				board[x][y] = BLACK;
-			}
-			else {
-				board[x][y] = NONE;
-			}
-
-			state /= 3;
-		}
-	}
-
-	// Remaining sheeps on hand.
-	long long pow = 1;
-	sheeps = 0;
-
-	for (int i = 0; i < 3; i++) {
-		sheeps += pow * (state % 3);
-		pow *= 3;
-		state /= 3;
-	}
-}
-
 /* Returns true if its a valid first phase move. */
 bool BaghChalGame::is_valid_first_phase_move_(const BaghChalMove &m) const {
 	return is_first_phase() and get_player() == WHITE and board[m.ci.x][m.ci.y] == NONE;
@@ -146,22 +70,6 @@ bool BaghChalGame::is_valid_first_phase_move_(const BaghChalMove &m) const {
 void BaghChalGame::make_first_phase_move_(const BaghChalCell &c) {
 	board[c.x][c.y] = WHITE;
 	sheeps--;
-}
-
-/* Performs a move. Assumes that is_valid_move(m) is true. TODO: Remove assumption that is_valid_move(m) is true. */
-void BaghChalGame::make_move_(const BaghChalMove &m) {
-	if (is_first_phase() and get_player() == WHITE) {
-		make_first_phase_move_(m.ci);
-	}
-	else {
-		// Moving.
-		swap(board[m.ci.x][m.ci.y], board[m.cf.x][m.cf.y]);
-
-		if (chebyshev_distance(m.ci, m.cf) == 2) { // Capturing.
-			board[(m.ci.x + m.cf.x) / 2][(m.ci.y + m.cf.y) / 2] = NONE;
-		}
-
-	}
 }
 
 /* Returns all the possible first phase moves for WHITE. */
@@ -225,12 +133,103 @@ vector<BaghChalMove> BaghChalGame::get_moves_for_(int player) const {
 	return moves;
 }
 
+/* ---------- PROTECTED ---------- */
+
+/* Returns the current game state converted to State. */
+long long BaghChalGame::get_state_() const {
+	long long state = 0;
+	long long pow = 1;
+
+	// Board.
+	for (int x = 0; x < N; x++) {
+		for (int y = 0; y < N; y++) {
+			if (board[x][y] == WHITE) {
+				state += 0 * pow;
+			}
+			else if (board[x][y] == BLACK) {
+				state += 1 * pow;
+			}
+			else {
+				state += 2 * pow;
+			}
+
+			pow *= 3;
+		}
+	}
+
+	// Remaining sheeps on hand.
+	int sheeps_ = sheeps;
+
+	for (int i = 0; i < 3; i++) {
+		state += (sheeps_ % 3) * pow;
+		sheeps_ /= 3;
+		pow *= 3;
+	}
+
+	return state;
+}
+
+/* Loads the game given a State. */
+void BaghChalGame::load_game_(const long long &state_) {
+	long long state = state_;
+
+	// Board.
+	for (int x = 0; x < N; x++) {
+		for (int y = 0; y < N; y++) {
+			if (state % 3 == 0) {
+				board[x][y] = WHITE;
+			}
+			else if (state % 3 == 1) {
+				board[x][y] = BLACK;
+			}
+			else {
+				board[x][y] = NONE;
+			}
+
+			state /= 3;
+		}
+	}
+
+	// Remaining sheeps on hand.
+	long long pow = 1;
+	sheeps = 0;
+
+	for (int i = 0; i < 3; i++) {
+		sheeps += pow * (state % 3);
+		pow *= 3;
+		state /= 3;
+	}
+}
+
+/* Performs a move. Assumes that is_valid_move(m) is true. TODO: Remove assumption that is_valid_move(m) is true. */
+void BaghChalGame::make_move_(const BaghChalMove &m) {
+	if (is_first_phase() and get_player() == WHITE) {
+		make_first_phase_move_(m.ci);
+	}
+	else {
+		// Moving.
+		swap(board[m.ci.x][m.ci.y], board[m.cf.x][m.cf.y]);
+
+		if (chebyshev_distance(m.ci, m.cf) == 2) { // Capturing.
+			board[(m.ci.x + m.cf.x) / 2][(m.ci.y + m.cf.y) / 2] = NONE;
+		}
+
+	}
+}
+
 /* Returns all the possible moves for the current state of the game. */
 vector<BaghChalMove> BaghChalGame::get_moves_() const {
 	return get_moves_for_(get_player());
 }
 
 /* ---------- PUBLIC ---------- */
+
+BaghChalGame::BaghChalGame() {
+	memset(board, NONE, sizeof(board));
+	board[0][0] = board[0][N - 1] = board[N - 1][0] = board[N - 1][N - 1] = BLACK;
+	sheeps = 20;
+	Game<long long, BaghChalMove>::initialize_game_();
+}
 
 /* Returns true if the movement is valid. */
 bool BaghChalGame::is_valid_move(const BaghChalMove &m) const {

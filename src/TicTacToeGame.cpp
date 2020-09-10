@@ -97,12 +97,6 @@ int TicTacToeGame::get_state_() const {
 	return state;
 }
 
-/* Initializes a new game. This function should be called at the end of initialize_game_() of the derived classes. */
-void TicTacToeGame::initialize_game_() {
-	memset(board, NONE, sizeof(board));
-	Game<int, TicTacToeMove>::initialize_game_();
-}
-
 /* Loads the game given a State. */
 void TicTacToeGame::load_game_(const int &state_) {
 	int state = state_;
@@ -159,6 +153,11 @@ int TicTacToeGame::get_winner_() const {
 }
 
 /* ---------- PUBLIC ---------- */
+
+TicTacToeGame::TicTacToeGame() {
+	memset(board, NONE, sizeof(board));
+	Game<int, TicTacToeMove>::initialize_game_();
+}
 
 /* Returns if the move (x, y) is a valid move. */
 bool TicTacToeGame::is_valid_move(const TicTacToeMove &m_) const {

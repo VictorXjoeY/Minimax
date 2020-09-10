@@ -74,14 +74,11 @@ protected:
 	/* Returns the current game state converted to State. */
 	int get_state_() const override;
 
-	/* Initializes a new game. This function should be called at the end of initialize_game_() of the derived classes. */
-	void initialize_game_() override;
-
 	/* Loads the game given a State. */
-	void load_game_(const int &state) override;
+	void load_game_(const int &) override;
 
 	/* Performs a move. Assumes that is_valid_move(m) is true. TODO: Remove assumption that is_valid_move(m) is true. */
-	void make_move_(const TicTacToeMove &m_) override;
+	void make_move_(const TicTacToeMove &) override;
 
 	/* Returns all the current possible moves. */
 	vector<TicTacToeMove> get_moves_() const override;
@@ -90,12 +87,10 @@ protected:
 	int get_winner_() const override;
 
 public:
-	TicTacToeGame() {
-		initialize_game_();
-	}
+	TicTacToeGame();
 
 	/* Returns if the move (x, y) is a valid move. */
-	bool is_valid_move(const TicTacToeMove &m_) const override;
+	bool is_valid_move(const TicTacToeMove &) const override;
 
 	/* Returns a move inputed by the player. */
 	TicTacToeMove get_player_move() const override;
