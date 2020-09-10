@@ -61,7 +61,7 @@ int get_game_mode() {
 	do {
 		printf("Game mode: ");
 		scanf("%d", &op);
-	} while (op < 1 or op > 4);
+	} while (op < PLAYER_VS_PLAYER or op > CPU_VS_CPU);
 
 	printf("\n");
 
