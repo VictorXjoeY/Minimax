@@ -53,22 +53,10 @@ private:
 		return 0 <= c.x and c.x < N and 0 <= c.y and c.y < N;
 	}
 
-	static char get_player_piece(int p) {
-		if (p == CROSS) {
-			return 'x';
-		}
-
-		if (p == CIRCLE) {
-			return 'o';
-		}
-
-		return ' ';
-	}
-
-	int board[N][N];
+	int board[N][N]; // Board.
 
 	/* Checks if a row, column or diagonal has been filled. */
-	bool is_game_over_() const;
+	bool has_someone_won_() const;
 
 protected:
 	/* Returns the current game state converted to State. */

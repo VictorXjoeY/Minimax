@@ -19,11 +19,12 @@
 #include <MuTorereGame.hpp>
 #include <BaghChalGame.hpp>
 #include <TicTacToeGame.hpp>
+#include <ConnectFourGame.hpp>
 
 using namespace std;
 
 /* Game constants. */
-const vector<string> GAMES = {"Konane", "MuTorere", "BaghChal", "TicTacToe"};
+const vector<string> GAMES = {"Konane", "MuTorere", "BaghChal", "TicTacToe", "ConnectFour"};
 
 /* Game option constants. */
 constexpr int PLAYER_VS_PLAYER = 1;
@@ -254,6 +255,9 @@ int main() {
 	}
 	else if (game_name == "TicTacToe") {
 		game_loop(TicTacToeGame());
+	}
+	else if (game_name == "ConnectFour") {
+		game_loop(ConnectFourGame());
 	}
 	else {
 		printf("%s has not been implemented.\n", game_name.c_str());

@@ -33,6 +33,7 @@ public:
 		OptimalMove() {}
 
 		OptimalMove(const MoveType &move_, double score_, bool is_optimal_, optional<int> winner_, int turn_) {
+			assert(static_cast<double>(PLAYER_MIN) <= score_ and score_ <= static_cast<double>(PLAYER_MAX));
 			move = move_;
 			score = score_;
 			is_optimal = is_optimal_;

@@ -1,5 +1,6 @@
 #include <cstring>
 #include <cctype>
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -317,7 +318,7 @@ double BaghChalGame::evaluate() const {
 	int stuck_wolves = stuck_wolves_count();
 	int dead_sheep = 20 - sheep_count();
 
-	return stuck_wolves * 0.05 - dead_sheep * 0.20;
+	return clamp(stuck_wolves * 0.05 - dead_sheep * 0.20, -1.0, 1.0);
 }
 
 /* Returns the board for printing. */

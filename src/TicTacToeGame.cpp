@@ -8,7 +8,7 @@
 
 /* ---------- PRIVATE ---------- */
 
-bool TicTacToeGame::is_game_over_() const {
+bool TicTacToeGame::has_someone_won_() const {
 	int x, y;
 
 	// Checking rows.
@@ -128,7 +128,7 @@ void TicTacToeGame::make_move_(const TicTacToeMove &m_) {
 vector<TicTacToeMove> TicTacToeGame::get_moves_() const {
 	vector<TicTacToeMove> moves;
 
-	if (is_game_over_()) {
+	if (has_someone_won_()) {
 		return vector<TicTacToeMove>();
 	}
 
@@ -145,7 +145,7 @@ vector<TicTacToeMove> TicTacToeGame::get_moves_() const {
 
 /* Returns the winner. */
 int TicTacToeGame::get_winner_() const {
-	if (is_game_over_()) {
+	if (has_someone_won_()) {
 		return Game<int, TicTacToeMove>::get_winner_();
 	}
 
@@ -191,7 +191,17 @@ TicTacToeGame::operator string() const {
 
 		for (int y = 0; y < N; y++) {
 			str += "  ";
-			str += get_player_piece(board[x][y]);
+
+			if (board[x][y] == CROSS) {
+				str += "X";
+			}
+			else if (board[x][y] == CIRCLE) {
+				str += "O";
+			}
+			else {
+				str += " ";
+			}
+
 			str += "  ";
 			str += y < N - 1 ? "|" : "";
 		}
