@@ -40,10 +40,10 @@ g++ --version
 ```
 
 ### Build
-Run `build.bat`.
+- Run `build.bat`.
 
 ### Run
-Run `run.bat`.
+- Run `run.bat`.
 
 # Notes
 - Works for any 2 player games implemented as a derived class from Game<StateType, MoveType>.
