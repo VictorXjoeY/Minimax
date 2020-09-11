@@ -45,11 +45,15 @@ g++ --version
 ### Run
 - Run `run.bat`.
 
+# Known Issues
+- On Windows Subsystem for Linux (WSL) the AI will play as soon as possible.
+- Don't run it on Windows if you want to have colorful prints!
+
 # Notes
 - Works for any 2 player games implemented as a derived class from Game<StateType, MoveType>.
 - Works for games with cycles.
 - Works for games that can tie.
 - Takes the shortest path for the win, but the longest path for the loss.
 - Uses around 1.2GB of RAM.
-- The AI takes at least `TIMEOUT` milliseconds to play. However, on Windows Subsystem for Linux (WSL) the AI will play as soon as possible.
+- The AI takes at least `TIMEOUT` milliseconds to play.
 - It currently does not work for games with imperfect information or chance elements (dice/card games). I'll probably code that in another project.
