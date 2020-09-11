@@ -54,10 +54,10 @@ string get_game_name() {
 int get_game_mode() {
 	int op;
 
-	printf("(1) Player as White vs Player as Black\n");
-	printf("(2) Player as White vs CPU    as Black\n");
-	printf("(3) CPU    as White vs Player as Black\n");
-	printf("(4) CPU    as White vs CPU    as Black\n");
+	printf("(1) Player vs Player\n");
+	printf("(2) Player vs CPU (Player goes first)\n");
+	printf("(3) Player vs CPU (CPU goes first)\n");
+	printf("(4) CPU vs CPU\n");
 
 	do {
 		printf("Game mode: ");
