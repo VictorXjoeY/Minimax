@@ -32,6 +32,9 @@ constexpr int PLAYER_VS_CPU = 2;
 constexpr int CPU_VS_PLAYER = 3;
 constexpr int CPU_VS_CPU = 4;
 
+/* Constants. */
+constexpr int DEFAULT_TIMEOUT = 1000;
+
 /* Gets the game. */
 string get_game_name() {
 	int game_op;
@@ -85,7 +88,7 @@ int get_player_number(int player) {
 
 /* Returns a move given by the AI. */
 template <class GameType, class MoveType = typename GameType::move_type>
-MoveType get_ai_move(Minimax<GameType> &ai, const GameType &game, long long timeout = 1000) {
+MoveType get_ai_move(Minimax<GameType> &ai, const GameType &game, long long timeout = DEFAULT_TIMEOUT) {
 	typename Minimax<GameType>::OptimalMove ans;
 	int depth;
 
