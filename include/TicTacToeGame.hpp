@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <optional>
 
 #include <Game.hpp>
 
@@ -68,6 +69,9 @@ protected:
 	/* Performs a move. Assumes that is_valid_move(m) is true. TODO: Remove assumption that is_valid_move(m) is true. */
 	void make_move_(const TicTacToeMove &) override;
 
+	/* Returns a move inputed by the player. */
+	optional<TicTacToeMove> get_player_move_(const string &) const override;
+
 	/* Returns all the current possible moves. */
 	vector<TicTacToeMove> get_moves_() const override;
 
@@ -79,9 +83,6 @@ public:
 
 	/* Returns if the move (x, y) is a valid move. */
 	bool is_valid_move(const TicTacToeMove &) const override;
-
-	/* Returns a move inputed by the player. */
-	TicTacToeMove get_player_move() const override;
 
 	/* Returns a value between -1 and 1 indicating how probable it is for the first player to win (1.0) or the other player to win (-1.0). */
 	using Game<int, TicTacToeMove>::evaluate;

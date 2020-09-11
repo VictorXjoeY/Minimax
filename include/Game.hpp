@@ -38,6 +38,9 @@ protected:
 	/* Performs a move. Assumes that is_valid_move(m) is true. TODO: Remove assumption that is_valid_move(m) is true. */
 	virtual void make_move_(const MoveType &) = 0;
 
+	/* Returns a move inputed by the player. */
+	virtual optional<MoveType> get_player_move_(const string &) const = 0;
+
 	/* Returns all the possible moves for the current state of the game. */
 	virtual vector<MoveType> get_moves_() const = 0;
 
@@ -66,9 +69,6 @@ public:
 	/* Returns true if the movement is valid. */
 	virtual bool is_valid_move(const MoveType &) const = 0;
 
-	/* Returns a move inputed by the player. */
-	virtual MoveType get_player_move() const = 0;
-
 	/* Returns a value between -1 and 1 indicating how probable it is for the first player to win (1.0) or the other player to win (-1.0). */
 	virtual double evaluate() const {
 		return 0.0;
@@ -87,6 +87,9 @@ public:
 
 	/* Returns the current state. */
 	virtual const StateType& get_state() const final;
+
+	/* Returns a move inputed by the player. */
+	virtual optional<MoveType> get_player_move(const string &) const final;
 
 	/* Returns all the possible moves for the current state of the game. */
 	virtual const vector<MoveType>& get_moves() const final;
@@ -142,6 +145,20 @@ template <class StateType, class MoveType>
 const StateType& Game<StateType, MoveType>::get_state() const {
 	assert(!states_stack.empty()); // Game::initialize_game_() has to be called!
 	return states_stack.back();
+}
+
+/* Returns a move inputed by the player. */
+template <class StateType, class MoveType>
+optional<MoveType> Game<StateType, MoveType>::get_player_move(const string &command) const {
+	if (command.empty()) {
+		if (moves_stack.back().size() == 1) {
+			return moves_stack.back().back();
+		}
+
+		return nullopt;
+	}
+
+	return get_player_move_(command);
 }
 
 /* Returns all the possible moves for the current state of the game. */

@@ -2,6 +2,7 @@
 #include <cassert>
 #include <string>
 #include <vector>
+#include <optional>
 
 #include <Common.hpp>
 #include <KonaneGame.hpp>
@@ -47,6 +48,10 @@ bool KonaneGame::is_second_turn() const {
 
 /* Returns if the move (x, y) at the start of the game is a valid move. */
 bool KonaneGame::is_valid_starting_move(const KonaneCell &c) const {
+	if (!is_inside(c)) {
+		return false;
+	}
+
 	if (is_first_turn()) { // First move.
 		if (c == KonaneCell(3, 2) or c == KonaneCell(2, 3)) { // Center.
 			return true;
@@ -151,6 +156,30 @@ void KonaneGame::make_move_(const KonaneMove &m_) {
 	}
 }
 
+/* Returns a move inputed by the player. */
+optional<KonaneMove> KonaneGame::get_player_move_(const string &command) const {
+	int xi, yi, xf, yf;
+
+	if (is_first_turn() or is_second_turn()) {
+		xf = yf = -1;
+
+		if (sscanf(command.c_str(), "%d %d", &xi, &yi) != 2) {
+			return nullopt;
+		}
+	}
+	else {
+		if (sscanf(command.c_str(), "%d %d %d %d", &xi, &yi, &xf, &yf) != 4) {
+			return nullopt;
+		}
+	}
+
+	if (is_valid_move(KonaneMove(xi, yi, xf, yf))) {
+		return KonaneMove(xi, yi, xf, yf);
+	}
+
+	return nullopt;
+}
+
 /* Returns all the current possible moves. */
 vector<KonaneMove> KonaneGame::get_moves_() const {
 	vector<KonaneMove> moves;
@@ -195,6 +224,10 @@ bool KonaneGame::is_valid_move(const KonaneMove &m_) const {
 
 	if (m.cf == KonaneCell(-1, -1)) { // One of the two first moves.
 		return is_valid_starting_move(m.ci);
+	}
+
+	if (!is_inside(m.ci) or !is_inside(m.cf)) { // Move out of bounds.
+		return false;
 	}
 
 	if (test(m.ci) != get_player()) { // Can't move a pawn that is not yours.
@@ -251,28 +284,6 @@ bool KonaneGame::is_valid_move(const KonaneMove &m_) const {
 
 	// Can only move horizontally or vertically.
 	return false;
-}
-
-/* Returns a move inputed by the player. */
-KonaneMove KonaneGame::get_player_move() const {
-	int xi, yi, xf, yf;
-
-	if (is_first_turn() or is_second_turn()) {
-		xf = yf = -1;
-
-		do {
-			scanf("%d %d", &xi, &yi);
-		} while (!is_inside(KonaneCell(xi, yi)) or !is_valid_move(KonaneMove(xi, yi, -1, -1)));
-	}
-	else {
-		do {
-			scanf("%d %d %d %d", &xi, &yi, &xf, &yf);
-		} while (!is_inside(KonaneCell(xi, yi)) or !is_inside(KonaneCell(xf, yf)) or !is_valid_move(KonaneMove(xi, yi, xf, yf)));
-	}
-
-	printf("\n");
-
-	return KonaneMove(xi, yi, xf, yf);
 }
 
 /* Returns the board for printing. */

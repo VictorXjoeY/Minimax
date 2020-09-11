@@ -2,6 +2,7 @@
 #include <cassert>
 #include <chrono>
 #include <vector>
+#include <optional>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -34,6 +35,16 @@ constexpr int CPU_VS_CPU = 4;
 
 /* Constants. */
 constexpr int DEFAULT_TIMEOUT = 1000;
+constexpr int MAX_COMMAND_LENGTH = 128;
+
+/* Clears typeahead from stdin. */
+void clear_input() {
+	char c;
+
+	do {
+		c = getchar();
+	} while (c != '\r' and c != '\n' and c != EOF);
+}
 
 /* Gets the game. */
 string get_game_name() {
@@ -46,6 +57,7 @@ string get_game_name() {
 	do {
 		printf("Game: ");
 		scanf("%d", &game_op);
+		clear_input();
 	} while (game_op < 1 or game_op > GAMES.size());
 
 	printf("\n");
@@ -65,6 +77,7 @@ int get_game_mode() {
 	do {
 		printf("Game mode: ");
 		scanf("%d", &op);
+		clear_input();
 	} while (op < PLAYER_VS_PLAYER or op > CPU_VS_CPU);
 
 	printf("\n");
@@ -88,7 +101,7 @@ int get_player_number(int player) {
 
 /* Returns a move given by the AI. */
 template <class GameType, class MoveType = typename GameType::move_type>
-MoveType get_ai_move(Minimax<GameType> &ai, const GameType &game, long long timeout = DEFAULT_TIMEOUT) {
+MoveType get_ai_move(const GameType &game, Minimax<GameType> &ai, long long timeout = DEFAULT_TIMEOUT) {
 	typename Minimax<GameType>::OptimalMove ans;
 	int depth;
 
@@ -147,14 +160,58 @@ MoveType get_ai_move(Minimax<GameType> &ai, const GameType &game, long long time
 	return ans.move;
 }
 
-/* Prints all the possible moves. */
-template <class GameType, class MoveType = typename GameType::move_type>
-void print_possible_moves(const GameType &game) {
-	vector<MoveType> moves = game.get_moves();
+/* Returns the format string to read a command from stdin. */
+string get_command_format_string() {
+	return "%" + to_string(MAX_COMMAND_LENGTH) + "[^\n]";
+}
 
-	for (const MoveType &move : moves) {
-		printf("%s\n", string(move).c_str());
+/* Returns a move given by the Player. */
+template <class GameType, class MoveType = typename GameType::move_type>
+MoveType get_player_move(GameType &game, int game_mode) {
+	char line[MAX_COMMAND_LENGTH + 1];
+	optional<MoveType> move;
+	string command;
+
+	if (scanf(get_command_format_string().c_str(), line) == 1 and line) {
+		command = string(line);
 	}
+	else {
+		command = "";
+	}
+
+	clear_input();
+
+	if (command == "undo") {
+		exit(1); // Not implemented.
+	}
+
+	move = game.get_player_move(command);
+
+	if (move.has_value()) {
+		return move.value();
+	}
+
+	do {
+		printf(COLOR_YELLOW "Invalid command." COLOR_WHITE " Try again: ");
+		fflush(stdout);
+
+		if (scanf(get_command_format_string().c_str(), line) == 1 and line) {
+			command = string(line);
+		}
+		else {
+			command = "";
+		}
+
+		clear_input();
+
+		if (command == "undo") {
+			exit(1); // Not implemented.
+		}
+
+		move = game.get_player_move(command);
+	} while (!move.has_value());
+
+	return move.value();
 }
 
 /* Prints "Player 1" or "Player 2". */
@@ -172,15 +229,26 @@ void print_player(int player) {
 }
 
 /* Prints what should be printed every iteration of the game loop. */
-template <class GameType>
+template <class GameType, class MoveType = typename GameType::move_type>
 void game_loop_print(const GameType &game) {
 	// Printing the board.
 	printf("%s\n", string(game).c_str());
 	printf(COLOR_BRIGHT_BLACK "========================\n\n" COLOR_WHITE);
 	
 	// Printing possible moves.
-	printf(COLOR_CYAN "Possible moves:\n" COLOR_WHITE);
-	print_possible_moves(game);
+	vector<MoveType> moves = game.get_moves();
+
+	if (moves.size() == 1) {
+		printf(COLOR_CYAN "Only one possible move (press Enter to use it):\n" COLOR_WHITE);
+	}
+	else {
+		printf(COLOR_CYAN "%d possible moves:\n" COLOR_WHITE, static_cast<int>(moves.size()));
+	}
+
+	for (const MoveType &move : moves) {
+		printf("%s\n", string(move).c_str());
+	}
+
 	printf("\n");
 
 	// Printing who's turn it is.
@@ -207,7 +275,7 @@ void game_loop(GameType game) {
 	Minimax<GameType> ai;
 
 	// Initializing.
-	int op = get_game_mode();
+	int game_mode = get_game_mode();
 
 	// Game loop.
 	while (!game.is_game_over()) {
@@ -215,11 +283,11 @@ void game_loop(GameType game) {
 		game_loop_print(game);
 		
 		// Move input.
-		if (is_player_turn(game, op)) { // Human.
-			game.make_move(game.get_player_move());
+		if (is_player_turn(game, game_mode)) { // Human.
+			game.make_move(get_player_move(game, game_mode));
 		}
 		else { // CPU.
-			game.make_move(get_ai_move(ai, game));
+			game.make_move(get_ai_move(game, ai));
 		}
 	}
 

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <string>
 #include <vector>
+#include <optional>
 
 #include <Common.hpp>
 #include <BaghChalGame.hpp>
@@ -64,7 +65,7 @@ void BaghChalGame::fill(char mat[D * (N - 1) + 1][D * (N - 1) + 1], int x, int y
 
 /* Returns true if its a valid first phase move. */
 bool BaghChalGame::is_valid_first_phase_move_(const BaghChalMove &m) const {
-	return is_first_phase() and get_player() == WHITE and board[m.ci.x][m.ci.y] == NONE;
+	return is_first_phase() and get_player() == WHITE and is_inside(m.ci) and board[m.ci.x][m.ci.y] == NONE;
 }
 
 /* Performs a first phase move. Assumes that is_valid_move(m) is true. TODO: Remove assumption that is_valid_move(m) is true. */
@@ -218,6 +219,30 @@ void BaghChalGame::make_move_(const BaghChalMove &m) {
 	}
 }
 
+/* Returns a move inputed by the player. */
+optional<BaghChalMove> BaghChalGame::get_player_move_(const string &command) const {
+	int xi, yi, xf, yf;
+
+	if (is_first_phase() and get_player() == WHITE) {
+		xf = yf = -1;
+
+		if (sscanf(command.c_str(), "%d %d", &xi, &yi) != 2) {
+			return nullopt;
+		}
+	}
+	else {
+		if (sscanf(command.c_str(), "%d %d %d %d", &xi, &yi, &xf, &yf) != 4) {
+			return nullopt;
+		}
+	}
+
+	if (is_valid_move(BaghChalMove(xi, yi, xf, yf))) {
+		return BaghChalMove(xi, yi, xf, yf);
+	}
+
+	return nullopt;
+}
+
 /* Returns all the possible moves for the current state of the game. */
 vector<BaghChalMove> BaghChalGame::get_moves_() const {
 	return get_moves_for_(get_player());
@@ -236,6 +261,10 @@ BaghChalGame::BaghChalGame() {
 bool BaghChalGame::is_valid_move(const BaghChalMove &m) const {
 	if (m.cf == BaghChalCell(-1, -1)) { // Sheep move during first phase.
 		return is_valid_first_phase_move_(m);
+	}
+
+	if (!is_inside(m.ci) or !is_inside(m.cf)) { // Move out of bounds.
+		return false;
 	}
 
 	if (board[m.ci.x][m.ci.y] != get_player()) { // Can't move a pawn that doesn't belong to the current player.
@@ -288,28 +317,6 @@ bool BaghChalGame::is_valid_move(const BaghChalMove &m) const {
 
 		return c == m.cf;
 	}
-}
-
-/* Returns a move inputed by the player. */
-BaghChalMove BaghChalGame::get_player_move() const {
-	int xi, yi, xf, yf;
-
-	if (is_first_phase() and get_player() == WHITE) {
-		xf = yf = -1;
-
-		do {
-			scanf("%d %d", &xi, &yi);
-		} while (!is_inside(xi, yi) or !is_valid_move(BaghChalMove(xi, yi, -1, -1)));
-	}
-	else {
-		do {
-			scanf("%d %d %d %d", &xi, &yi, &xf, &yf);
-		} while (!is_inside(xi, yi) or !is_inside(xf, yf) or !is_valid_move(BaghChalMove(xi, yi, xf, yf)));
-	}
-
-	printf("\n");
-
-	return BaghChalMove(xi, yi, xf, yf);
 }
 
 /* Returns a value between -1 and 1 indicating how probable it is for the first player to win (1.0) or the other player to win (-1.0). */

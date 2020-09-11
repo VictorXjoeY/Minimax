@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <string>
 #include <vector>
+#include <optional>
 
 #include <Common.hpp>
 #include <ConnectFourGame.hpp>
@@ -138,6 +139,21 @@ void ConnectFourGame::make_move_(const ConnectFourMove &m) {
 	}
 }
 
+/* Returns a move inputed by the player. */
+optional<ConnectFourMove> ConnectFourGame::get_player_move_(const string &command) const {
+	int p;
+
+	if (sscanf(command.c_str(), "%d", &p) != 1) {
+		return nullopt;
+	}
+
+	if (is_valid_move(ConnectFourMove(p))) {
+		return ConnectFourMove(p);
+	}
+
+	return nullopt;
+}
+
 /* Returns all the current possible moves. */
 vector<ConnectFourMove> ConnectFourGame::get_moves_() const {
 	vector<ConnectFourMove> moves;
@@ -174,19 +190,6 @@ ConnectFourGame::ConnectFourGame() {
 /* Returns if the move (x, y) is a valid move. */
 bool ConnectFourGame::is_valid_move(const ConnectFourMove &m) const {
 	return 0 <= m.y and m.y < M and board[0][m.y] == NONE;
-}
-
-/* Returns a move inputed by the player. */
-ConnectFourMove ConnectFourGame::get_player_move() const {
-	int p;
-
-	do {
-		scanf("%d", &p);
-	} while (!is_valid_move(ConnectFourMove(p)));
-
-	printf("\n");
-
-	return ConnectFourMove(p);
 }
 
 /* Returns a value between -1 and 1 indicating how probable it is for the first player to win (1.0) or the other player to win (-1.0). */

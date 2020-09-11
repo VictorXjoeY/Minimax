@@ -2,6 +2,7 @@
 #include <cstring>
 #include <string>
 #include <vector>
+#include <optional>
 
 #include <Common.hpp>
 #include <TicTacToeGame.hpp>
@@ -124,6 +125,21 @@ void TicTacToeGame::make_move_(const TicTacToeMove &m_) {
 	board[m_.c.x][m_.c.y] = get_player();
 }
 
+/* Returns a move inputed by the player. */
+optional<TicTacToeMove> TicTacToeGame::get_player_move_(const string &command) const {
+	int x, y;
+
+	if (sscanf(command.c_str(), "%d %d", &x, &y) != 2) {
+		return nullopt;
+	}
+
+	if (is_valid_move(TicTacToeMove(x, y))) {
+		return TicTacToeMove(x, y);
+	}
+
+	return nullopt;
+}
+
 /* Returns all the current possible moves. */
 vector<TicTacToeMove> TicTacToeGame::get_moves_() const {
 	vector<TicTacToeMove> moves;
@@ -162,19 +178,6 @@ TicTacToeGame::TicTacToeGame() {
 /* Returns if the move (x, y) is a valid move. */
 bool TicTacToeGame::is_valid_move(const TicTacToeMove &m_) const {
 	return is_inside(m_.c) and board[m_.c.x][m_.c.y] == NONE;
-}
-
-/* Returns a move inputed by the player. */
-TicTacToeMove TicTacToeGame::get_player_move() const {
-	int x, y;
-
-	do {
-		scanf("%d %d", &x, &y);
-	} while (!is_valid_move(TicTacToeMove(x, y)));
-
-	printf("\n");
-
-	return TicTacToeMove(x, y);
 }
 
 /* Returns the board for printing. */

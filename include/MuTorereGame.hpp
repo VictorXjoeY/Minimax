@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <optional>
 
 #include <Game.hpp>
 
@@ -48,6 +49,9 @@ protected:
 	/* Performs a move. Assumes that is_valid_move(m) is true. TODO: Remove assumption that is_valid_move(m) is true. */
 	void make_move_(const MuTorereMove &) override;
 
+	/* Returns a move inputed by the player. */
+	optional<MuTorereMove> get_player_move_(const string &) const override;
+
 	/* Returns all the possible moves for the current state of the game. */
 	vector<MuTorereMove> get_moves_() const override;
 
@@ -59,9 +63,6 @@ public:
 
 	/* Returns true if the movement is valid. */
 	bool is_valid_move(const MuTorereMove &) const override;
-
-	/* Returns a move inputed by the player. */
-	MuTorereMove get_player_move() const override;
 
 	/* Returns a value between -1 and 1 indicating how probable it is for the first player to win (1.0) or the other player to win (-1.0). */
 	using Game<int, MuTorereMove>::evaluate;

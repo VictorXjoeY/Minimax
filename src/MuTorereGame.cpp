@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <string>
 #include <vector>
+#include <optional>
 
 #include <Common.hpp>
 
@@ -71,6 +72,21 @@ void MuTorereGame::make_move_(const MuTorereMove &move) {
 	swap(board[move.pos], board[get_empty_position()]);
 }
 
+/* Returns a move inputed by the player. */
+optional<MuTorereMove> MuTorereGame::get_player_move_(const string &command) const {
+	int p;
+
+	if (sscanf(command.c_str(), "%d", &p) != 1) {
+		return nullopt;
+	}
+
+	if (is_valid_move(MuTorereMove(p))) {
+		return MuTorereMove(p);
+	}
+
+	return nullopt;
+}
+
 /* Returns all the possible moves for the current state of the game. */
 vector<MuTorereMove> MuTorereGame::get_moves_() const {
 	vector<MuTorereMove> moves;
@@ -102,6 +118,10 @@ MuTorereGame::MuTorereGame() {
 
 /* Returns true if the movement is valid. */
 bool MuTorereGame::is_valid_move(const MuTorereMove &move) const {
+	if (move.pos < 0 or move.pos > N) { // Move out of bounds.
+		return false;
+	}
+
 	if (board[move.pos] != get_player()) { // Can't move a pawn if it doesn't belong to the current player.
 		return false;
 	}
@@ -116,19 +136,6 @@ bool MuTorereGame::is_valid_move(const MuTorereMove &move) const {
 
 	// Can move around the circle if adjacent to an empty space.
 	return board[(move.pos + N - 1) % N] == NONE or board[(move.pos + 1) % N] == NONE;
-}
-
-/* Returns a move inputed by the player. */
-MuTorereMove MuTorereGame::get_player_move() const {
-	int p;
-
-	do {
-		scanf("%d", &p);
-	} while (p < 0 or p >= 9 or !is_valid_move(MuTorereMove(p)));
-
-	printf("\n");
-
-	return p;
 }
 
 MuTorereGame::operator string() const {
