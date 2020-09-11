@@ -173,7 +173,7 @@ string get_command_format_string() {
 string get_player_command() {
 	char line[MAX_COMMAND_LENGTH + 1];
 
-	if (scanf(get_command_format_string().c_str(), line) == 1 and line) {
+	if (scanf(get_command_format_string().c_str(), line) == 1) {
 		clear_input();
 		return string(line);
 	}
