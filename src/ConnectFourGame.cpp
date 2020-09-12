@@ -1,6 +1,5 @@
 #include <cstdio>
 #include <cstring>
-#include <algorithm>
 #include <string>
 #include <vector>
 #include <optional>
@@ -180,6 +179,13 @@ int ConnectFourGame::get_winner_() const {
 	return NONE;
 }
 
+/* Returns a value between -1 and 1 indicating how probable it is for the first player to win (1.0) or the other player to win (-1.0). */
+double ConnectFourGame::evaluate_() const {
+	int score = get_score_(YELLOW) - get_score_(RED);
+	score += get_player() == YELLOW ? 2 : -2; // Giving a 2 points advantage to the current player.
+	return score / static_cast<double>(MAX_SCORE + 2);
+}
+
 /* ---------- PUBLIC ---------- */
 
 ConnectFourGame::ConnectFourGame() {
@@ -190,13 +196,6 @@ ConnectFourGame::ConnectFourGame() {
 /* Returns if the move (x, y) is a valid move. */
 bool ConnectFourGame::is_valid_move(const ConnectFourMove &m) const {
 	return 0 <= m.y and m.y < M and board[0][m.y] == NONE;
-}
-
-/* Returns a value between -1 and 1 indicating how probable it is for the first player to win (1.0) or the other player to win (-1.0). */
-double ConnectFourGame::evaluate() const {
-	int score = get_score_(YELLOW) - get_score_(RED);
-	score += get_player() == YELLOW ? 2 : -2; // Giving a 2 points advantage to the current player.
-	return clamp(score / static_cast<double>(MAX_SCORE + 2), -1.0, 1.0);
 }
 
 /* Returns the board for printing. */

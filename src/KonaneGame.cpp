@@ -288,18 +288,43 @@ bool KonaneGame::is_valid_move(const KonaneMove &m_) const {
 
 /* Returns the board for printing. */
 KonaneGame::operator string() const {
-	vector<KonaneMove> moves = get_moves_();
+	vector<KonaneMove> moves = get_moves();
 	long long highlighted = 0;
-	string str;
 
 	// Marking all (xi, yi).
 	for (const KonaneMove &move : moves) {
 		highlighted |= 1ll << (long long)convert_cell(move.ci);
 	}
 
+	string str = "       ";
+
+	for (int y = 0; y < N; y++) {
+		str += "   " + to_string(y) + "  ";
+	}
+
+	str += " \n";
+	str += "       ";
+
+	for (int y = 0; y < N; y++) {
+		str += "______";
+	}
+
+	str += "_\n";
+
 	// Printing board.
 	for (int x = 0; x < N; x++) {
+		str += "       ";
+
 		for (int y = 0; y < N; y++) {
+			str += "|     ";
+		}
+
+		str += "|\n";
+		str += "   " + to_string(x) + "   ";
+		
+		for (int y = 0; y < N; y++) {
+			str += "|  ";
+
 			if (test(KonaneCell(x, y)) == WHITE) {
 				if ((highlighted >> (long long)convert_cell(KonaneCell(x, y))) & 1ll) {
 					str += COLOR_BRIGHT_MAGENTA;
@@ -308,7 +333,7 @@ KonaneGame::operator string() const {
 					str += COLOR_RED;
 				}
 
-				str += "w ";
+				str += "W";
 				str += COLOR_WHITE;
 			}
 			else if (test(KonaneCell(x, y)) == BLACK) {
@@ -319,15 +344,24 @@ KonaneGame::operator string() const {
 					str += COLOR_BLUE;
 				}
 
-				str += "b ";
+				str += "B";
 				str += COLOR_WHITE;
 			}
 			else {
-				str += ". ";
+				str += " ";
 			}
+
+			str += "  ";
 		}
 
-		str += "\n";
+		str += "|\n";
+		str += "       ";
+
+		for (int y = 0; y < N; y++) {
+			str += "|_____";
+		}
+		
+		str += "|\n";
 	}
 
 	return str;

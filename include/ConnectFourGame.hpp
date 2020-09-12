@@ -73,14 +73,14 @@ protected:
 	/* Returns the winner. */
 	int get_winner_() const override;
 
+	/* Returns a value between -1 and 1 indicating how probable it is for the first player to win (1.0) or the other player to win (-1.0). */
+	double evaluate_() const override;
+
 public:
 	ConnectFourGame();
 
 	/* Returns if the move (x, y) is a valid move. */
 	bool is_valid_move(const ConnectFourMove &) const override;
-
-	/* Returns a value between -1 and 1 indicating how probable it is for the first player to win (1.0) or the other player to win (-1.0). */
-	double evaluate() const override;
 
 	/* Returns the board for printing. */
 	operator string() const override;

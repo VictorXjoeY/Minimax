@@ -65,8 +65,8 @@ private:
 	static constexpr int D = 5;
 
 	/* Cell state constants. */
-	static constexpr int WHITE = Game<long long, BaghChalMove>::PLAYER_MAX;
-	static constexpr int BLACK = Game<long long, BaghChalMove>::PLAYER_MIN;
+	static constexpr int SHEEP = Game<long long, BaghChalMove>::PLAYER_MAX;
+	static constexpr int WOLF = Game<long long, BaghChalMove>::PLAYER_MIN;
 	static constexpr int NONE = Game<long long, BaghChalMove>::PLAYER_NONE;
 
 	// UP, RIGHT, DOWN, LEFT, UPRIGHT, DOWNRIGHT, DOWNLEFT, UPLEFT
@@ -114,7 +114,7 @@ private:
 	int board[N][N]; // Board.
 	int sheeps; // Sheeps to be placed on the board.
 
-	/* Returns true if WHITE player is still placing sheeps on the board. */
+	/* Returns true if SHEEP player is still placing sheeps on the board. */
 	bool is_first_phase() const;
 
 	/* Returns the number sheeps which are alive. */
@@ -127,13 +127,13 @@ private:
 	void fill(char mat[D * (N - 1) + 1][D * (N - 1) + 1], int x, int y, int d) const;
 
 	/* Returns true if its a valid first phase move. */
-	bool is_valid_first_phase_move_(const BaghChalMove &) const;
+	bool is_valid_sheep_placement_move_(const BaghChalMove &) const;
 
 	/* Performs a first phase move. Assumes that is_valid_move(m) is true. TODO: Remove assumption that is_valid_move(m) is true. */
-	void make_first_phase_move_(const BaghChalCell &);
+	void make_sheep_placement_move_(const BaghChalCell &);
 
-	/* Returns all the possible first phase moves for WHITE. */
-	vector<BaghChalMove> get_first_phase_moves_() const;
+	/* Returns all the possible first phase moves for SHEEP. */
+	vector<BaghChalMove> get_sheep_placement_moves_() const;
 
 	/* Returns all the possible moves for the current state of the game. */
 	vector<BaghChalMove> get_moves_for_(int) const;
@@ -157,14 +157,14 @@ protected:
 	/* Returns the winner. */
 	using Game<long long, BaghChalMove>::get_winner_;
 
+	/* Returns a value between -1 and 1 indicating how probable it is for the first player to win (1.0) or the other player to win (-1.0). */
+	double evaluate_() const override;
+
 public:
 	BaghChalGame();
 
 	/* Returns true if the movement is valid. */
 	bool is_valid_move(const BaghChalMove &) const override;
-
-	/* Returns a value between -1 and 1 indicating how probable it is for the first player to win (1.0) or the other player to win (-1.0). */
-	double evaluate() const override;
 
 	/* Returns the board for printing. */
 	operator string() const override;

@@ -103,67 +103,6 @@ int get_player_number(int player) {
 	return 0;
 }
 
-/* Returns a move given by the AI. */
-template <class GameType, class MoveType = typename GameType::move_type>
-MoveType get_ai_move(const GameType &game, Minimax<GameType> &ai, long long timeout = DEFAULT_TIMEOUT) {
-	typename Minimax<GameType>::OptimalMove ans;
-	int depth;
-
-	// Getting optimal move.
-	chrono::time_point<chrono::high_resolution_clock> t_start = chrono::high_resolution_clock::now();
-	tie(ans, depth) = ai.get_move(game, timeout);
-	chrono::milliseconds t = chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - t_start);
-
-	// Pretending that the AI is thinking for at least timeout milliseconds.
-	#ifdef _WIN32
-	Sleep(max(0ll, timeout - t.count()));
-	#else
-	this_thread::sleep_for(max(chrono::milliseconds(0), chrono::milliseconds(timeout) - t));
-	#endif
-
-	// Printing move.
-	printf("%s\n", string(ans.move).c_str());
-
-	// Printing real thinking time.
-	int padding_length = 3 - to_string(t.count() % 1000).size();
-	string thinking_time = to_string(t.count() / 1000) + "." + string(padding_length, '0') + to_string(t.count() % 1000);
-
-	if (t <= chrono::milliseconds(timeout)) {
-		printf(COLOR_GREEN "(depth = %d / time = %ss) " COLOR_WHITE, depth, thinking_time.c_str());
-	}
-	else if (t <= 2 * chrono::milliseconds(timeout)) {
-		printf(COLOR_YELLOW "(depth = %d / time = %ss) " COLOR_WHITE, depth, thinking_time.c_str());
-	}
-	else {
-		printf(COLOR_RED "(depth = %d / time = %ss) " COLOR_WHITE, depth, thinking_time.c_str());
-	}
-
-	// Printing if the AI is playing optimally or not.
-	if (ans.is_optimal) {
-		printf("CPU is playing " COLOR_GREEN "optimally\n" COLOR_WHITE);
-
-		if (ans.winner.has_value()) {
-			if (ans.winner.value() != GameType::PLAYER_NONE) {
-				string winner_color = game.get_player() == ans.winner.value() ? COLOR_GREEN : COLOR_RED;
-				printf("%s(Player %d will win in at most %d moves)\n" COLOR_WHITE, winner_color.c_str(), get_player_number<GameType>(ans.winner.value()), ans.turn - game.get_turn() - 1);
-			}
-			else {
-				printf("(The game will end in a " COLOR_YELLOW "draw" COLOR_WHITE " in at most %d moves)\n", ans.turn - game.get_turn() - 1);
-			}
-		}
-		else {
-			printf("(The game can go on forever!)\n");
-		}
-	}
-	else {
-		printf("CPU might be playing " COLOR_RED "non optimally\n" COLOR_WHITE);
-	}
-
-	printf("\n");
-
-	return ans.move;
-}
-
 /* Returns the format string to read a command from stdin. */
 string get_command_format_string() {
 	return "%" + to_string(MAX_COMMAND_LENGTH) + "[^\n]";
@@ -206,14 +145,9 @@ void print_player(int player) {
 	}
 }
 
-/* Prints what should be printed every iteration of the game loop. */
+/* Prints the current possible moves. */
 template <class GameType, class MoveType = typename GameType::move_type>
-void game_loop_print(const GameType &game) {
-	// Printing the board.
-	printf("%s\n", string(game).c_str());
-	printf(COLOR_BRIGHT_BLACK "========================\n\n" COLOR_WHITE);
-	
-	// Printing possible moves.
+void print_possible_moves(const GameType &game) {
 	vector<MoveType> moves = game.get_moves();
 
 	if (moves.size() == 1) {
@@ -228,6 +162,17 @@ void game_loop_print(const GameType &game) {
 	}
 
 	printf("\n");
+}
+
+/* Prints what should be printed every iteration of the game loop. */
+template <class GameType, class MoveType = typename GameType::move_type>
+void game_loop_print(const GameType &game) {
+	// Printing the board.
+	printf(COLOR_BRIGHT_BLACK "\n========== TURN %03d ==========\n\n" COLOR_WHITE, game.get_turn());
+	printf("%s\n", string(game).c_str());
+	
+	// Printing possible moves.
+	print_possible_moves(game);
 
 	// Printing who's turn it is.
 	print_player<GameType>(game.get_player());
@@ -269,10 +214,70 @@ bool is_select_game_mode_command(const string &command) {
 	return lower(command) == "select game mode" or lower(command) == "select gamemode" or lower(command) == "select mode" or lower(command) == "change game mode" or lower(command) == "change gamemode" or lower(command) == "change mode";
 }
 
-
 template <class GameType>
 bool is_valid_command(const GameType &game, int game_mode, const string &command) {
 	return (is_undo_command(command) and can_undo(game, game_mode)) or (is_new_game_command(command) and game.get_turn() > 1) or is_select_game_mode_command(command);
+}
+
+/* Returns a move given by the AI. */
+template <class GameType, class MoveType = typename GameType::move_type>
+MoveType get_ai_move(const GameType &game, Minimax<GameType> &ai, long long timeout = DEFAULT_TIMEOUT) {
+	typename Minimax<GameType>::OptimalMove ans;
+	int depth;
+
+	// Getting optimal move.
+	chrono::time_point<chrono::high_resolution_clock> t_start = chrono::high_resolution_clock::now();
+	tie(ans, depth) = ai.get_move(game, timeout);
+	chrono::milliseconds t = chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - t_start);
+
+	// Pretending that the AI is thinking for at least timeout milliseconds.
+	#ifdef _WIN32
+	Sleep(max(0ll, timeout - t.count()));
+	#else
+	this_thread::sleep_for(max(chrono::milliseconds(0), chrono::milliseconds(timeout) - t));
+	#endif
+
+	// Printing move.
+	printf("%s\n", string(ans.move).c_str());
+
+	// Printing real thinking time.
+	int padding_length = 3 - to_string(t.count() % 1000).size();
+	string thinking_time = to_string(t.count() / 1000) + "." + string(padding_length, '0') + to_string(t.count() % 1000);
+
+	if (t <= chrono::milliseconds(timeout)) {
+		printf(COLOR_GREEN "(depth = %d / time = %ss) " COLOR_WHITE, depth, thinking_time.c_str());
+	}
+	else if (t <= 2 * chrono::milliseconds(timeout)) {
+		printf(COLOR_YELLOW "(depth = %d / time = %ss) " COLOR_WHITE, depth, thinking_time.c_str());
+	}
+	else {
+		printf(COLOR_RED "(depth = %d / time = %ss) " COLOR_WHITE, depth, thinking_time.c_str());
+	}
+
+	// Printing if the AI is playing optimally or not.
+	if (ans.is_solved) {
+		printf("CPU is playing " COLOR_GREEN "optimally\n" COLOR_WHITE);
+
+		if (ans.winner.has_value()) {
+			if (ans.winner.value() != GameType::PLAYER_NONE) {
+				string winner_color = game.get_player() == ans.winner.value() ? COLOR_GREEN : COLOR_RED;
+				printf("%s(Player %d will win in at most %d moves)\n" COLOR_WHITE, winner_color.c_str(), get_player_number<GameType>(ans.winner.value()), ans.turn - game.get_turn() - 1);
+			}
+			else {
+				printf("(The game will end in a " COLOR_YELLOW "draw" COLOR_WHITE " in at most %d moves)\n", ans.turn - game.get_turn() - 1);
+			}
+		}
+		else {
+			printf("(The game can go on forever!)\n");
+		}
+	}
+	else {
+		printf("CPU might be playing " COLOR_RED "non optimally\n" COLOR_WHITE);
+	}
+
+	printf("\n");
+
+	return ans.move;
 }
 
 /* Game loop. */
@@ -341,8 +346,8 @@ void game_loop(GameType game) {
 		}
 
 		// Printing the final board.
+		printf(COLOR_BRIGHT_BLACK "\n========== TURN %03d ==========\n\n" COLOR_WHITE, game.get_turn());
 		printf("%s\n", string(game).c_str());
-		printf(COLOR_BRIGHT_BLACK "========================\n\n" COLOR_WHITE);
 
 		// Printing winner.
 		assert(game.get_winner().has_value());

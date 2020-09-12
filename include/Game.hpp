@@ -3,6 +3,7 @@
 #include <cassert>
 #include <string>
 #include <vector>
+#include <algorithm>
 #include <optional>
 
 using namespace std;
@@ -25,6 +26,7 @@ private:
 	vector<StateType> states_stack; // Game state history.
 	vector<vector<MoveType>> moves_stack; // Possible moves.
 	vector<optional<int>> winner_stack; // Winner, if any.
+	int player_; // Current player.
 
 protected:
 	Game() = default;
@@ -35,7 +37,7 @@ protected:
 	/* Loads the game given a State. */
 	virtual void load_game_(const StateType &) = 0;
 
-	/* Performs a move. Assumes that is_valid_move(m) is true. TODO: Remove assumption that is_valid_move(m) is true. */
+	/* Performs a move. is_valid_move(m) should be true. */
 	virtual void make_move_(const MoveType &) = 0;
 
 	/* Returns a move inputed by the player. */
@@ -47,6 +49,11 @@ protected:
 	/* Returns the winner. */
 	virtual int get_winner_() const {
 		return get_enemy();
+	}
+
+	/* Returns a value between -1 and 1 indicating how probable it is for the first player to win (1.0) or the other player to win (-1.0). */
+	virtual double evaluate_() const {
+		return 0.0;
 	}
 
 	/* ---------- FINAL ---------- */
@@ -68,11 +75,6 @@ public:
 
 	/* Returns true if the movement is valid. */
 	virtual bool is_valid_move(const MoveType &) const = 0;
-
-	/* Returns a value between -1 and 1 indicating how probable it is for the first player to win (1.0) or the other player to win (-1.0). */
-	virtual double evaluate() const {
-		return 0.0;
-	}
 
 	/* Returns the game for printing. */
 	virtual operator string() const = 0;
@@ -108,6 +110,9 @@ public:
 
 	/* Returns the winner, if any. */
 	virtual optional<int> get_winner() const final;
+
+	/* Returns a value between -1 and 1 indicating how probable it is for the first player to win (1.0) or the other player to win (-1.0). */
+	virtual double evaluate() const final;
 };
 
 /* ---------- PROTECTED ---------- */
@@ -115,6 +120,7 @@ public:
 /* Initializes a new game. This function should be called at the end of initialize_game_() of the derived classes. */
 template <class StateType, class MoveType>
 void Game<StateType, MoveType>::initialize_game_() {
+	player_ = PLAYER_MAX;
 	states_stack.push_back(get_state_());
 	moves_stack.push_back(get_moves_());
 	winner_stack.push_back(is_game_over() ? optional(get_winner_()) : nullopt);
@@ -125,13 +131,7 @@ void Game<StateType, MoveType>::initialize_game_() {
 /* Current player. */
 template <class StateType, class MoveType>
 int Game<StateType, MoveType>::get_player() const {
-	assert(!states_stack.empty()); // Game::initialize_game_() has to be called!
-
-	if (states_stack.size() % 2 != 0) {
-		return PLAYER_MAX;
-	}
-
-	return PLAYER_MIN;
+	return player_;
 }
 
 /* Current enemy. */
@@ -167,11 +167,16 @@ const vector<MoveType>& Game<StateType, MoveType>::get_moves() const {
 	return moves_stack.back();
 }
 
-/* Performs a move. Assumes that is_valid_move(m) is true. TODO: Maybe remove assumption that is_valid_move(m) is true. */
+/* Performs a move. Assumes that is_valid_move(m) is true. */
 template <class StateType, class MoveType>
 void Game<StateType, MoveType>::make_move(const MoveType &m) {
 	assert(!states_stack.empty()); // Game::initialize_game_() has to be called!
+	assert(is_valid_move(m));
+
 	make_move_(m);
+
+	// Updating Game state.
+	player_ = get_enemy();
 	states_stack.push_back(get_state_());
 	moves_stack.push_back(get_moves_());
 	winner_stack.push_back(is_game_over() ? optional(get_winner_()) : nullopt);
@@ -182,9 +187,12 @@ template <class StateType, class MoveType>
 void Game<StateType, MoveType>::rollback() {
 	assert(!states_stack.empty()); // Game::initialize_game_() has to be called!
 	if (states_stack.size() > 1) {
-		states_stack.pop_back();
-		moves_stack.pop_back();
+		// Updating Game state.
+		player_ = get_enemy();
 		winner_stack.pop_back();
+		moves_stack.pop_back();
+		states_stack.pop_back();
+
 		load_game_(states_stack.back());
 	}
 }
@@ -205,4 +213,10 @@ bool Game<StateType, MoveType>::is_game_over() const {
 template <class StateType, class MoveType>
 optional<int> Game<StateType, MoveType>::get_winner() const {
 	return winner_stack.back();
+}
+
+/* Returns a value between -1 and 1 indicating how probable it is for the first player to win (1.0) or the other player to win (-1.0). */
+template <class StateType, class MoveType>
+double Game<StateType, MoveType>::evaluate() const {
+	return clamp(evaluate_(), static_cast<double>(PLAYER_MIN), static_cast<double>(PLAYER_MAX));
 }

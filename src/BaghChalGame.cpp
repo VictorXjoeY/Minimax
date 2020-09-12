@@ -1,6 +1,5 @@
 #include <cstring>
 #include <cctype>
-#include <algorithm>
 #include <string>
 #include <vector>
 #include <optional>
@@ -16,7 +15,7 @@ constexpr int BaghChalGame::INV_DIR[3][3];
 
 /* ---------- PRIVATE ---------- */
 
-/* Returns true if WHITE player is still placing sheeps on the board. */
+/* Returns true if SHEEP player is still placing sheeps on the board. */
 bool BaghChalGame::is_first_phase() const {
 	return sheeps > 0;
 }
@@ -27,7 +26,7 @@ int BaghChalGame::sheep_count() const {
 
 	for (int x = 0; x < N; x++) {
 		for (int y = 0; y < N; y++) {
-			ans += board[x][y] == WHITE;
+			ans += board[x][y] == SHEEP;
 		}
 	}
 
@@ -36,7 +35,7 @@ int BaghChalGame::sheep_count() const {
 
 /* Returns the number of wolves currently stuck. */
 int BaghChalGame::stuck_wolves_count() const {
-	vector<BaghChalMove> moves = get_moves_for_(BLACK);
+	vector<BaghChalMove> moves = get_moves_for_(WOLF);
 
 	if (moves.empty()) {
 		return 4;
@@ -64,18 +63,18 @@ void BaghChalGame::fill(char mat[D * (N - 1) + 1][D * (N - 1) + 1], int x, int y
 }
 
 /* Returns true if its a valid first phase move. */
-bool BaghChalGame::is_valid_first_phase_move_(const BaghChalMove &m) const {
-	return is_first_phase() and get_player() == WHITE and is_inside(m.ci) and board[m.ci.x][m.ci.y] == NONE;
+bool BaghChalGame::is_valid_sheep_placement_move_(const BaghChalMove &m) const {
+	return is_first_phase() and get_player() == SHEEP and is_inside(m.ci) and board[m.ci.x][m.ci.y] == NONE;
 }
 
 /* Performs a first phase move. Assumes that is_valid_move(m) is true. TODO: Remove assumption that is_valid_move(m) is true. */
-void BaghChalGame::make_first_phase_move_(const BaghChalCell &c) {
-	board[c.x][c.y] = WHITE;
+void BaghChalGame::make_sheep_placement_move_(const BaghChalCell &c) {
+	board[c.x][c.y] = SHEEP;
 	sheeps--;
 }
 
-/* Returns all the possible first phase moves for WHITE. */
-vector<BaghChalMove> BaghChalGame::get_first_phase_moves_() const {
+/* Returns all the possible first phase moves for SHEEP. */
+vector<BaghChalMove> BaghChalGame::get_sheep_placement_moves_() const {
 	vector<BaghChalMove> moves;
 
 	for (int x = 0; x < N; x++) {
@@ -93,12 +92,12 @@ vector<BaghChalMove> BaghChalGame::get_first_phase_moves_() const {
 vector<BaghChalMove> BaghChalGame::get_moves_for_(int player) const {
 	vector<BaghChalMove> moves;
 
-	if (sheep_count() <= 15) { // BLACK won.
+	if (sheep_count() <= 15) { // WOLF won.
 		return vector<BaghChalMove>();
 	}
 
-	if (is_first_phase() and player == WHITE) { // Sheep placement move.
-		return get_first_phase_moves_();
+	if (is_first_phase() and player == SHEEP) { // Sheep placement move.
+		return get_sheep_placement_moves_();
 	}
 
 	// General moves.
@@ -118,7 +117,7 @@ vector<BaghChalMove> BaghChalGame::get_moves_for_(int player) const {
 						}
 
 						// Capture.
-						if (player == BLACK and board[xf][yf] == WHITE) {
+						if (player == WOLF and board[xf][yf] == SHEEP) {
 							xf += DIR[d][0];
 							yf += DIR[d][1];
 
@@ -145,10 +144,10 @@ long long BaghChalGame::get_state_() const {
 	// Board.
 	for (int x = 0; x < N; x++) {
 		for (int y = 0; y < N; y++) {
-			if (board[x][y] == WHITE) {
+			if (board[x][y] == SHEEP) {
 				state += 0 * pow;
 			}
-			else if (board[x][y] == BLACK) {
+			else if (board[x][y] == WOLF) {
 				state += 1 * pow;
 			}
 			else {
@@ -168,6 +167,16 @@ long long BaghChalGame::get_state_() const {
 		pow *= 3;
 	}
 
+	if (get_player() == SHEEP) {
+		state += 0 * pow;
+	}
+	else if (get_player() == WOLF) {
+		state += 1 * pow;
+	}
+	else {
+		state += 2 * pow;
+	}
+
 	return state;
 }
 
@@ -179,10 +188,10 @@ void BaghChalGame::load_game_(const long long &state_) {
 	for (int x = 0; x < N; x++) {
 		for (int y = 0; y < N; y++) {
 			if (state % 3 == 0) {
-				board[x][y] = WHITE;
+				board[x][y] = SHEEP;
 			}
 			else if (state % 3 == 1) {
-				board[x][y] = BLACK;
+				board[x][y] = WOLF;
 			}
 			else {
 				board[x][y] = NONE;
@@ -198,15 +207,15 @@ void BaghChalGame::load_game_(const long long &state_) {
 
 	for (int i = 0; i < 3; i++) {
 		sheeps += pow * (state % 3);
-		pow *= 3;
 		state /= 3;
+		pow *= 3;
 	}
 }
 
 /* Performs a move. Assumes that is_valid_move(m) is true. TODO: Remove assumption that is_valid_move(m) is true. */
 void BaghChalGame::make_move_(const BaghChalMove &m) {
-	if (is_first_phase() and get_player() == WHITE) {
-		make_first_phase_move_(m.ci);
+	if (is_first_phase() and get_player() == SHEEP) {
+		make_sheep_placement_move_(m.ci);
 	}
 	else {
 		// Moving.
@@ -215,7 +224,6 @@ void BaghChalGame::make_move_(const BaghChalMove &m) {
 		if (chebyshev_distance(m.ci, m.cf) == 2) { // Capturing.
 			board[(m.ci.x + m.cf.x) / 2][(m.ci.y + m.cf.y) / 2] = NONE;
 		}
-
 	}
 }
 
@@ -223,7 +231,7 @@ void BaghChalGame::make_move_(const BaghChalMove &m) {
 optional<BaghChalMove> BaghChalGame::get_player_move_(const string &command) const {
 	int xi, yi, xf, yf;
 
-	if (is_first_phase() and get_player() == WHITE) {
+	if (is_first_phase() and get_player() == SHEEP) {
 		xf = yf = -1;
 
 		if (sscanf(command.c_str(), "%d %d", &xi, &yi) != 2) {
@@ -248,11 +256,19 @@ vector<BaghChalMove> BaghChalGame::get_moves_() const {
 	return get_moves_for_(get_player());
 }
 
+/* Returns a value between -1 and 1 indicating how probable it is for the first player to win (1.0) or the other player to win (-1.0). */
+double BaghChalGame::evaluate_() const {
+	// Pretending that we are SHEEP.
+	int stuck_wolves = stuck_wolves_count();
+	int dead_sheep = 20 - sheep_count();
+	return stuck_wolves * 0.04 - dead_sheep * 0.16;
+}
+
 /* ---------- PUBLIC ---------- */
 
 BaghChalGame::BaghChalGame() {
 	memset(board, NONE, sizeof(board));
-	board[0][0] = board[0][N - 1] = board[N - 1][0] = board[N - 1][N - 1] = BLACK;
+	board[0][0] = board[0][N - 1] = board[N - 1][0] = board[N - 1][N - 1] = WOLF;
 	sheeps = 20;
 	Game<long long, BaghChalMove>::initialize_game_();
 }
@@ -260,7 +276,7 @@ BaghChalGame::BaghChalGame() {
 /* Returns true if the movement is valid. */
 bool BaghChalGame::is_valid_move(const BaghChalMove &m) const {
 	if (m.cf == BaghChalCell(-1, -1)) { // Sheep move during first phase.
-		return is_valid_first_phase_move_(m);
+		return is_valid_sheep_placement_move_(m);
 	}
 
 	if (!is_inside(m.ci) or !is_inside(m.cf)) { // Move out of bounds.
@@ -275,57 +291,42 @@ bool BaghChalGame::is_valid_move(const BaghChalMove &m) const {
 		return false;
 	}
 
-	if (get_player() == WHITE) { // Sheeps only move one cell.
-		if ((m.ci.x + m.ci.y) % 2 == 0) { // 8 directions.
-			return chebyshev_distance(m.ci, m.cf) == 1;
-		}
-		else { // 4 directions.
-			return manhattan_distance(m.ci, m.cf) == 1;
-		}
-	}
-	else { // Wolves move one cell or capture a sheep.
-		int vx = m.cf.x - m.ci.x;
-		int vy = m.cf.y - m.ci.y;
-
-		if (vx % max(vx, vy) != 0 or vy % max(vx, vy) != 0) {
-			return false;
-		}
-
-		int d = INV_DIR[1 + vx / max(vx, vy)][1 + vy / max(vx, vy)];
-		
-		if ((m.ci.x + m.ci.y) % 2 != 0 and d >= 4) { // Only 4 directions. Can't move diagonally.
-			return false;
-		}
-
-		BaghChalCell c = m.ci;
-
-		// One step.
-		c.x += DIR[d][0];
-		c.y += DIR[d][1];
-
-		if (c == m.cf) { // Basic move.
+	if ((m.ci.x + m.ci.y) % 2 == 0) { // 8 directions.
+		if (chebyshev_distance(m.ci, m.cf) == 1) { // Non-capturing move.
 			return true;
 		}
-
-		if (board[c.x][c.y] != WHITE) { // Can't capture non-white.
-			return false;
-		}
-
-		// Two steps.
-		c.x += DIR[d][0];
-		c.y += DIR[d][1];
-
-		return c == m.cf;
 	}
-}
+	else { // 4 directions.
+		if (manhattan_distance(m.ci, m.cf) == 1) { // Non-capturing move.
+			return true;
+		}
+	}
 
-/* Returns a value between -1 and 1 indicating how probable it is for the first player to win (1.0) or the other player to win (-1.0). */
-double BaghChalGame::evaluate() const {
-	// Pretending that we are WHITE.
-	int stuck_wolves = stuck_wolves_count();
-	int dead_sheep = 20 - sheep_count();
+	// Sheep can only move 1 cell, treated above.
+	if (get_player() == SHEEP) {
+		return false;
+	}
 
-	return clamp(stuck_wolves * 0.05 - dead_sheep * 0.20, -1.0, 1.0);
+	int vx = m.cf.x - m.ci.x;
+	int vy = m.cf.y - m.ci.y;
+	int d = INV_DIR[1 + vx / 2][1 + vy / 2];
+	BaghChalCell c = m.ci;
+
+	// First step.
+	c.x += DIR[d][0];
+	c.y += DIR[d][1];
+
+	// Checking if this is a sheep to be captured.
+	if (!is_inside(c) or board[c.x][c.y] != SHEEP) {
+		return false;
+	}
+
+	// Second step.
+	c.x += DIR[d][0];
+	c.y += DIR[d][1];
+
+	// Checking if this is the final cell m.cf.
+	return c == m.cf;
 }
 
 /* Returns the board for printing. */
@@ -357,11 +358,11 @@ BaghChalGame::operator string() const {
 	// Filling board with pawns.
 	for (int x = 0; x < N; x++) {
 		for (int y = 0; y < N; y++) {
-			if (board[x][y] == WHITE) {
-				mat[D * x][D * y] = 'w';
+			if (board[x][y] == SHEEP) {
+				mat[D * x][D * y] = 's';
 			}
-			else if (board[x][y] == BLACK) {
-				mat[D * x][D * y] = 'b';
+			else if (board[x][y] == WOLF) {
+				mat[D * x][D * y] = 'w';
 			}
 			else {
 				mat[D * x][D * y] = 'o';
@@ -370,43 +371,67 @@ BaghChalGame::operator string() const {
 	}
 
 	// Highlighting.
-	if (!is_first_phase() or get_player() == BLACK) {
-		vector<BaghChalMove> moves = get_moves_();
+	vector<BaghChalMove> moves = get_moves();
 
-		for (const BaghChalMove &move : moves) {
-			mat[D * move.ci.x][D * move.ci.y] = toupper(mat[D * move.ci.x][D * move.ci.y]);
-		}
+	for (const BaghChalMove &move : moves) {
+		mat[D * move.ci.x][D * move.ci.y] = toupper(mat[D * move.ci.x][D * move.ci.y]);
 	}
 
 	// Filling the string.
-	string str = "";
+	string str = "       ";
+
+	// Y indexes.
+	for (int y = 0; y < D * (N - 1) + 1; y++) {
+		if (y % D == 0) {
+			str += to_string(y / D) + " ";
+		}
+		else {
+			str += "  ";
+		}
+	}
+
+	str += "\n\n";
 
 	for (int x = 0; x < D * (N - 1) + 1; x++) {
+		// X indexes.
+		if (x % D == 0) {
+			str += "   " + to_string(x / D) + "   ";
+		}
+		else {
+			str += "       ";
+		}
+
 		for (int y = 0; y < D * (N - 1) + 1; y++) {
-			if (tolower(mat[x][y]) == 'w') {
-				if (mat[x][y] == 'W') {
+			if (tolower(mat[x][y]) == 's') {
+				if (mat[x][y] == 'S') {
 					str += COLOR_BRIGHT_MAGENTA;
 				}
 				else {
 					str += COLOR_RED;
 				}
 
-				str += "w ";
+				str += "S ";
 				str += COLOR_WHITE;
 			}
-			else if (tolower(mat[x][y]) == 'b') {
-				if (mat[x][y] == 'B') {
+			else if (tolower(mat[x][y]) == 'w') {
+				if (mat[x][y] == 'W') {
 					str += COLOR_MAGENTA;
 				}
 				else {
 					str += COLOR_BLUE;
 				}
 
-				str += "b ";
+				str += "W ";
 				str += COLOR_WHITE;
 			}
-			else if (mat[x][y] == 'o') {
-				str += COLOR_YELLOW;
+			else if (tolower(mat[x][y]) == 'o') {
+				if (mat[x][y] == 'O') {
+					str += COLOR_BRIGHT_MAGENTA;
+				}
+				else {
+					str += COLOR_YELLOW;
+				}
+
 				str += "o ";
 				str += COLOR_WHITE;
 			}
@@ -422,6 +447,9 @@ BaghChalGame::operator string() const {
 
 		str += "\n";
 	}
+
+	str += "\n";
+	str += "       Dead sheep: " + to_string(20 - sheep_count()) + "\n";
 
 	return str;
 }
