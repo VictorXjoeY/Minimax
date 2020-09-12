@@ -1,2 +1,2 @@
-main.exe
+bin\main.exe
 pause

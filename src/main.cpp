@@ -35,7 +35,7 @@ constexpr int CPU_VS_PLAYER = 3;
 constexpr int CPU_VS_CPU = 4;
 
 /* Constants. */
-constexpr int DEFAULT_TIMEOUT = 1000;
+constexpr int DEFAULT_TIMEOUT = 2000;
 constexpr int MAX_COMMAND_LENGTH = 128;
 
 /* Clears typeahead from stdin. */
