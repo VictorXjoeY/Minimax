@@ -145,10 +145,10 @@ MoveType get_ai_move(const GameType &game, Minimax<GameType> &ai, long long time
 		if (ans.winner.has_value()) {
 			if (ans.winner.value() != GameType::PLAYER_NONE) {
 				string winner_color = game.get_player() == ans.winner.value() ? COLOR_GREEN : COLOR_RED;
-				printf("%s(Player %d will win in at most %d moves)\n" COLOR_WHITE, winner_color.c_str(), get_player_number<GameType>(ans.winner.value()), ans.turn - game.get_turn());
+				printf("%s(Player %d will win in at most %d moves)\n" COLOR_WHITE, winner_color.c_str(), get_player_number<GameType>(ans.winner.value()), ans.turn - game.get_turn() - 1);
 			}
 			else {
-				printf("(The game will end in a " COLOR_YELLOW "draw" COLOR_WHITE " in at most %d moves)\n", ans.turn - game.get_turn());
+				printf("(The game will end in a " COLOR_YELLOW "draw" COLOR_WHITE " in at most %d moves)\n", ans.turn - game.get_turn() - 1);
 			}
 		}
 		else {

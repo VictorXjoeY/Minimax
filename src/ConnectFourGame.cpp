@@ -42,7 +42,7 @@ int ConnectFourGame::get_score_(int player) const {
 
 				// If no enemies were found in this 4 sequence.
 				if (i == 4) {
-					score += player_count;
+					score += player_count + 1;
 				}
 			}
 		}

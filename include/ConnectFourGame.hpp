@@ -38,7 +38,7 @@ private:
 	static constexpr int DOWNRIGHT_POSSIBILITIES = 12;
 	static constexpr int DOWN_POSSIBILITIES = 21;
 	static constexpr int TOTAL_POSSIBILITIES = UPRIGHT_POSSIBILITIES + RIGHT_POSSIBILITIES + DOWNRIGHT_POSSIBILITIES + DOWN_POSSIBILITIES;
-	static constexpr int MAX_SCORE = 4 * TOTAL_POSSIBILITIES; // Considering every cell is filled with the same color.
+	static constexpr int MAX_SCORE = 5 * TOTAL_POSSIBILITIES; // Considering every cell is filled with the same color.
 	
 
 	/* Returns if the coordinate is inside the board. */
