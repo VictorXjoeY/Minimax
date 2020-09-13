@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cstdio>
 #include <chrono>
 #include <limits>
 #include <functional>
@@ -28,7 +27,6 @@ public:
 		bool is_solved = false; // True if one player can force a victory or if all states in this node's subtree have known results.
 		optional<int> winner;
 		int turn = -1; // In which turn this move ends, relative to the start of the game.
-		int height = -1; // Height of the node of this move or number of steps ahead that were observed.
 
 		OptimalMove() {}
 
@@ -36,7 +34,7 @@ public:
 			#ifdef DEBUG
 			assert(static_cast<double>(GameType::PLAYER_MIN) <= score_ and score_ <= static_cast<double>(GameType::PLAYER_MAX));
 			#endif
-			
+
 			move = move_;
 			score = score_;
 			is_solved = is_solved_;
@@ -49,9 +47,10 @@ private:
 	static constexpr int DP_RESERVE = 10000000;
 	static constexpr int IN_STACK_RESERVE = 10000;
 
-	unordered_map<StateType, OptimalMove> dp;
-	unordered_set<StateType> in_stack;
-	GameType game;
+	unordered_map<StateType, OptimalMove> dp; // Dynamic Programming for already seen game states.
+	unordered_set<StateType> in_stack; // Cycle detection.
+	vector<OptimalMove> move_history; // Moves returned.
+	GameType game; // Game.
 
 	/* Recursive function that runs the Minimax algorithm with alpha-beta pruning. */
 	OptimalMove solve(double alpha, double beta, int height) {
@@ -71,7 +70,7 @@ private:
 		// If we are trying to calculate a state which was already calculated higher up on the tree then return its value.
 		OptimalMove &ans = dp[game.get_state()];
 
-		if (ans.is_solved or ans.height >= height) {
+		if (ans.is_solved or ans.turn >= game.get_turn() + height) {
 			return ans;
 		}
 
@@ -130,7 +129,6 @@ private:
 
 		// The answer is optimal if the current player won or if we don't hit any nonoptimal states.
 		ans.is_solved = ans.score == static_cast<double>(game.get_player()) or non_solved_count == 0;
-		ans.height = height;
 
 		return ans;
 	}
@@ -165,6 +163,23 @@ public:
 		if (dp.size() >= DP_RESERVE) {
 			dp.clear();
 		}
+
+		// TODO: Fix BaghChal dumb sheep bug
+		#ifdef DEBUG
+		static bool crash_next_turn = false;
+
+		if (crash_next_turn) {
+			assert(false);
+		}
+
+		if (!move_history.empty() and !move_history.back().is_solved and ans.is_solved) {
+			if (move_history.back().turn >= ans.turn) {
+				crash_next_turn = true;
+			}
+		}
+
+		move_history.push_back(ans);
+		#endif
 
 		// Returning optimal move.
 		return {ans, max_depth - 1};

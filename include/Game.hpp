@@ -203,10 +203,10 @@ void Game<StateType, MoveType>::rollback() {
 
 	if (states_stack.size() > 1) {
 		// Updating Game state.
-		player_ = get_enemy();
 		winner_stack.pop_back();
 		moves_stack.pop_back();
 		states_stack.pop_back();
+		// player_ = get_enemy(); // Not necessary since load_game_() will call set_player_()
 
 		load_game_(states_stack.back());
 	}
