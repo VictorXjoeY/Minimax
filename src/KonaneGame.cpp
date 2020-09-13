@@ -116,12 +116,32 @@ vector<KonaneMove> KonaneGame::get_starting_moves() const {
 
 /* Returns the current game state converted to State. */
 long long KonaneGame::get_state_() const {
+	if (get_player() == WHITE) {
+		return board | (1ll << N * N);
+	}
+
+	if (get_player() == BLACK) {
+		return board | (1ll << (N * N + 1));
+	}
+
 	return board;
 }
 
 /* Loads the game given a State. */
 void KonaneGame::load_game_(const long long &state) {
-	board = state;
+	// Current player.
+	if ((state >> (N * N)) & 1ll) {
+		set_player_(WHITE);
+	}
+	else if ((state >> (N * N + 1)) & 1ll) {
+		set_player_(BLACK);
+	}
+	else {
+		set_player_(NONE);
+	}
+	
+	// Board.
+	board = state & ((1ll << (N * N)) - 1);
 }
 
 /* Performs a move. Assumes that is_valid_move(m) is true. TODO: Remove assumption that is_valid_move(m) is true. */

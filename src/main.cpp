@@ -350,7 +350,9 @@ void game_loop(GameType game) {
 		printf("%s\n", string(game).c_str());
 
 		// Printing winner.
+		#ifdef DEBUG
 		assert(game.get_winner().has_value());
+		#endif
 
 		if (game.get_winner().value() == GameType::PLAYER_NONE) {
 			printf(COLOR_YELLOW "Draw!\n" COLOR_WHITE);

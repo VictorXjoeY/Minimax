@@ -31,6 +31,7 @@ int MuTorereGame::get_state_() const {
 	int state = 0;
 	int pow = 1;
 
+	// Board.
 	for (int i = 0; i < N + 1; i++) {
 		if (board[i] == WHITE) {
 			state += 0 * pow;
@@ -45,6 +46,17 @@ int MuTorereGame::get_state_() const {
 		pow *= 3;
 	}
 
+	// Current player.
+	if (get_player() == WHITE) {
+		state += 0 * pow;
+	}
+	else if (get_player() == BLACK) {
+		state += 1 * pow;
+	}
+	else {
+		state += 2 * pow;
+	}
+
 	return state;
 }
 
@@ -52,6 +64,7 @@ int MuTorereGame::get_state_() const {
 void MuTorereGame::load_game_(const int &state_) {
 	int state = state_;
 
+	// Board.
 	for (int i = 0; i < N + 1; i++) {
 		if (state % 3 == 0) {
 			board[i] = WHITE;
@@ -64,6 +77,17 @@ void MuTorereGame::load_game_(const int &state_) {
 		}
 
 		state /= 3;
+	}
+
+	// Current player.
+	if (state % 3 == 0) {
+		set_player_(WHITE);
+	}
+	else if (state % 3 == 1) {
+		set_player_(BLACK);
+	}
+	else {
+		set_player_(NONE);
 	}
 }
 

@@ -167,6 +167,7 @@ long long BaghChalGame::get_state_() const {
 		pow *= 3;
 	}
 
+	// Current player.
 	if (get_player() == SHEEP) {
 		state += 0 * pow;
 	}
@@ -209,6 +210,17 @@ void BaghChalGame::load_game_(const long long &state_) {
 		sheeps += pow * (state % 3);
 		state /= 3;
 		pow *= 3;
+	}
+
+	// Current player.
+	if (state % 3 == 0) {
+		set_player_(SHEEP);
+	}
+	else if (state % 3 == 1) {
+		set_player_(WOLF);
+	}
+	else {
+		set_player_(NONE);
 	}
 }
 

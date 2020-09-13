@@ -95,6 +95,17 @@ int TicTacToeGame::get_state_() const {
 		}
 	}
 
+	// Current player.
+	if (get_player() == CROSS) {
+		state += 0 * pow;
+	}
+	else if (get_player() == CIRCLE) {
+		state += 1 * pow;
+	}
+	else {
+		state += 2 * pow;
+	}
+
 	return state;
 }
 
@@ -117,6 +128,17 @@ void TicTacToeGame::load_game_(const int &state_) {
 
 			state /= 3;
 		}
+	}
+
+	// Current player.
+	if (state % 3 == 0) {
+		set_player_(CROSS);
+	}
+	else if (state % 3 == 1) {
+		set_player_(CIRCLE);
+	}
+	else {
+		set_player_(NONE);
 	}
 }
 

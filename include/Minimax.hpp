@@ -33,7 +33,10 @@ public:
 		OptimalMove() {}
 
 		OptimalMove(const MoveType &move_, double score_, bool is_solved_, optional<int> winner_, int turn_) {
+			#ifdef DEBUG
 			assert(static_cast<double>(GameType::PLAYER_MIN) <= score_ and score_ <= static_cast<double>(GameType::PLAYER_MAX));
+			#endif
+			
 			move = move_;
 			score = score_;
 			is_solved = is_solved_;

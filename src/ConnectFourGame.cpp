@@ -88,6 +88,7 @@ bool ConnectFourGame::has_someone_won_() const {
 string ConnectFourGame::get_state_() const {
 	long long yellow = 0, red = 0, pow = 1;
 
+	// Board.
 	for (int x = 0; x < N; x++) {
 		for (int y = 0; y < M; y++) {
 			if (board[x][y] == YELLOW) {
@@ -101,15 +102,42 @@ string ConnectFourGame::get_state_() const {
 		}
 	}
 
-	return to_string(yellow) + " " + to_string(red);
+	// Current player.
+	if (get_player() == YELLOW) {
+		return to_string(yellow) + "y" + to_string(red);
+	}
+	
+	if (get_player() == RED) {
+		return to_string(yellow) + "r" + to_string(red);
+	}
+
+	return to_string(yellow) + "n" + to_string(red);
 }
 
 /* Loads the game given a State. */
 void ConnectFourGame::load_game_(const string &state) {
-	int pos = state.find(" ");
+	int pos = state.find("y");
+
+	// Current player.
+	if (pos == string::npos) {
+		pos = state.find("r");
+
+		if (pos == string::npos) {
+			pos = state.find("n");
+			set_player_(NONE);
+		}
+		else {
+			set_player_(RED);
+		}
+	}
+	else {
+		set_player_(YELLOW);
+	}
+
 	long long yellow = stoll(state.substr(0, pos));
 	long long red = stoll(state.substr(pos + 1));
 
+	// Board.
 	for (int x = 0; x < N; x++) {
 		for (int y = 0; y < M; y++) {
 			if (yellow & 1) {
