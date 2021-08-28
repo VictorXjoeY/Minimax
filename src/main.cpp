@@ -89,20 +89,6 @@ int get_game_mode() {
 	return op;
 }
 
-/* Returns 1 if it's the first player or 2 if it's the second player. */
-template <class GameType>
-int get_player_number(int player) {
-	if (player == GameType::PLAYER_MAX) {
-		return 1;
-	}
-
-	if (player == GameType::PLAYER_MIN) {
-		return 2;
-	}
-
-	return 0;
-}
-
 /* Returns the format string to read a command from stdin. */
 string get_command_format_string() {
 	return "%" + to_string(MAX_COMMAND_LENGTH) + "[^\n]";
@@ -121,14 +107,18 @@ string get_player_command() {
 	return "";
 }
 
-/* Checks if undo is valid for the current state of the game. */
-template <class GameType, class MoveType = typename GameType::move_type>
-bool can_undo(GameType &game, int game_mode) {
-	if (game_mode == PLAYER_VS_PLAYER) {
-		return game.get_turn() > 1;
+/* Returns 1 if it's the first player or 2 if it's the second player. */
+template <class GameType>
+int get_player_number(int player) {
+	if (player == GameType::PLAYER_MAX) {
+		return 1;
 	}
 
-	return game.get_turn() > 2;
+	if (player == GameType::PLAYER_MIN) {
+		return 2;
+	}
+
+	return 0;
 }
 
 /* Prints "Player 1" or "Player 2". */
@@ -180,6 +170,26 @@ void game_loop_print(const GameType &game) {
 	fflush(stdout);
 }
 
+/* Prints what should be printed at the end of the game. */
+template <class GameType>
+void game_end_print(const GameType &game) {
+	printf(COLOR_BRIGHT_BLACK "\n========== TURN %03d ==========\n\n" COLOR_WHITE, game.get_turn());
+	printf("%s\n", string(game).c_str());
+
+	// Printing winner.
+	#ifdef DEBUG
+	assert(game.get_winner().has_value());
+	#endif
+
+	if (game.get_winner().value() == GameType::PLAYER_NONE) {
+		printf(COLOR_YELLOW "Draw!\n" COLOR_WHITE);
+	}
+	else {
+		print_player<GameType>(game.get_winner().value());
+		printf(" won!\n");
+	}
+}
+
 /* Returns true if its the player's turn. */
 template <class GameType>
 bool is_player_turn(const GameType &game, int op) {
@@ -215,8 +225,115 @@ bool is_select_game_mode_command(const string &command) {
 }
 
 template <class GameType>
+bool is_valid_undo_command(const GameType &game, int game_mode, const string &command) {
+	if (!is_undo_command(command)) {
+		return false;
+	}
+
+	if (game_mode == PLAYER_VS_PLAYER) {
+		return game.get_turn() > 1;
+	}
+
+	return game.get_turn() > 2;
+}
+
+template <class GameType>
+bool is_valid_new_game_command(const GameType &game, const string &command) {
+	if (!is_new_game_command(command)) {
+		return false;
+	}
+
+	return game.get_turn() > 1;
+}
+
+bool is_valid_select_game_mode_command(const string &command) {
+	return is_select_game_mode_command(command);
+}
+
+template <class GameType>
 bool is_valid_command(const GameType &game, int game_mode, const string &command) {
-	return (is_undo_command(command) and can_undo(game, game_mode)) or (is_new_game_command(command) and game.get_turn() > 1) or is_select_game_mode_command(command);
+	return is_valid_undo_command(game, game_mode, command) or is_valid_new_game_command(game, command) or is_valid_select_game_mode_command(command);
+}
+
+template <class GameType>
+bool continue_playing(GameType &game, int &game_mode) {
+	string command;
+
+	// Post game command handling.
+	do {
+		printf("Issue a command (or press Enter to exit): ");
+		fflush(stdout);
+
+		// Checking command.
+		command = get_player_command();
+
+		if (is_valid_command(game, game_mode, command)) {
+			// Handling command.
+			if (is_valid_undo_command(game, game_mode, command)) {
+				if (game_mode == PLAYER_VS_PLAYER) {
+					game.rollback();
+				}
+				else {
+					game.rollback();
+					game.rollback();
+				}
+
+				return true;
+			}
+			else if (is_valid_new_game_command(game, command)) {
+				game = GameType();
+				return true;
+			}
+			else if (is_valid_select_game_mode_command(command)) {
+				printf("\nCurrent game mode is %d\n\n", game_mode);
+				game_mode = get_game_mode();
+			}
+		}
+	} while (!command.empty());
+
+	return false;
+}
+
+template <class GameType, class MoveType = typename GameType::move_type>
+optional<MoveType> get_player_move(GameType &game, int &game_mode) {
+	optional<string> command;
+	optional<MoveType> move;
+
+	do {
+		if (command.has_value()) {
+			printf(COLOR_YELLOW "Invalid command." COLOR_WHITE " Try again: ");
+			fflush(stdout);
+		}
+
+		// Checking command.
+		command = get_player_command();
+
+		if (is_valid_command(game, game_mode, command.value())){
+			// Handling command.
+			if (is_valid_undo_command(game, game_mode, command.value())) {
+				if (game_mode == PLAYER_VS_PLAYER) {
+					game.rollback();
+				}
+				else {
+					game.rollback();
+					game.rollback();
+				}
+			}
+			else if (is_valid_new_game_command(game, command.value())) {
+				game = GameType();
+			}
+			else if (is_valid_select_game_mode_command(command.value())) {
+				printf("\nCurrent game mode is %d\n\n", game_mode);
+				game_mode = get_game_mode();
+			}
+
+			return nullopt;
+		}
+
+		move = game.get_player_move(command.value());
+	} while (!move.has_value());
+
+	return move.value();
 }
 
 /* Returns a move given by the AI. */
@@ -282,13 +399,10 @@ MoveType get_ai_move(const GameType &game, Minimax<GameType> &ai, long long time
 
 /* Game loop. */
 template <class GameType, class MoveType = typename GameType::move_type>
-void game_loop(GameType game) {
-	string last_command;
-
-	// Creating AI.
-	Minimax<GameType> ai;
-
+void game_loop() {
 	// Initializing.
+	Minimax<GameType> ai;
+	GameType game;
 	int game_mode = get_game_mode();
 
 	do {
@@ -299,44 +413,9 @@ void game_loop(GameType game) {
 			
 			// Move input.
 			if (is_player_turn(game, game_mode)) { // Human.
-				optional<string> command;
-				optional<MoveType> move;
+				optional<MoveType> move = get_player_move(game, game_mode);
 
-				do {
-					if (command.has_value()) {
-						printf(COLOR_YELLOW "Invalid command." COLOR_WHITE " Try again: ");
-						fflush(stdout);
-					}
-
-					// Checking command.
-					command = get_player_command();
-
-					if (is_valid_command(game, game_mode, command.value())){
-						break;
-					}
-					else {
-						move = game.get_player_move(command.value());
-					}
-				} while (!move.has_value());
-
-				// Handling command.
-				if (is_undo_command(command.value()) and can_undo(game, game_mode)) {
-					if (game_mode == PLAYER_VS_PLAYER) {
-						game.rollback();
-					}
-					else {
-						game.rollback();
-						game.rollback();
-					}
-				}
-				else if (is_new_game_command(command.value()) and game.get_turn() > 1) {
-					game = GameType();
-				}
-				else if (is_select_game_mode_command(command.value())) {
-					printf("\nCurrent game mode is %d\n\n", game_mode);
-					game_mode = get_game_mode();
-				}
-				else {
+				if (move.has_value()) {
 					game.make_move(move.value());
 				}
 			}
@@ -346,55 +425,8 @@ void game_loop(GameType game) {
 		}
 
 		// Printing the final board.
-		printf(COLOR_BRIGHT_BLACK "\n========== TURN %03d ==========\n\n" COLOR_WHITE, game.get_turn());
-		printf("%s\n", string(game).c_str());
-
-		// Printing winner.
-		#ifdef DEBUG
-		assert(game.get_winner().has_value());
-		#endif
-
-		if (game.get_winner().value() == GameType::PLAYER_NONE) {
-			printf(COLOR_YELLOW "Draw!\n" COLOR_WHITE);
-		}
-		else {
-			print_player<GameType>(game.get_winner().value());
-			printf(" won!\n");
-		}
-
-		// Post game command handling.
-		do {
-			printf("Issue a command (or press Enter to exit): ");
-			fflush(stdout);
-
-			// Checking command.
-			last_command = get_player_command();
-
-			if (is_valid_command(game, game_mode, last_command)) {
-				if (is_select_game_mode_command(last_command)) {
-					printf("\nCurrent game mode is %d\n\n", game_mode);
-					game_mode = get_game_mode();
-				}
-				else {
-					break;
-				}
-			}
-		} while (!last_command.empty());
-
-		// Handling command.
-		if (is_undo_command(last_command) and can_undo(game, game_mode)) {
-			if (game_mode == PLAYER_VS_PLAYER) {
-				game.rollback();
-			}
-			else {
-				game.rollback();
-				game.rollback();
-			}
-		}
-		else if (is_new_game_command(last_command)) {
-			game = GameType();
-		}
-	} while (!last_command.empty());
+		game_end_print(game);
+	} while (continue_playing(game, game_mode));
 }
 
 int main() {
@@ -406,19 +438,19 @@ int main() {
 
 	// Running game.
 	if (game_name == "Konane") {
-		game_loop(KonaneGame());
+		game_loop<KonaneGame>();
 	}
 	else if (game_name == "MuTorere") {
-		game_loop(MuTorereGame());
+		game_loop<MuTorereGame>();
 	}
 	else if (game_name == "BaghChal") {
-		game_loop(BaghChalGame());
+		game_loop<BaghChalGame>();
 	}
 	else if (game_name == "TicTacToe") {
-		game_loop(TicTacToeGame());
+		game_loop<TicTacToeGame>();
 	}
 	else if (game_name == "ConnectFour") {
-		game_loop(ConnectFourGame());
+		game_loop<ConnectFourGame>();
 	}
 	else {
 		printf("%s has not been implemented.\n", game_name.c_str());
