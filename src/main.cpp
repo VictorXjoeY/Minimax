@@ -35,7 +35,7 @@ constexpr int CPU_VS_PLAYER = 3;
 constexpr int CPU_VS_CPU = 4;
 
 /* Constants. */
-constexpr int DEFAULT_TIMEOUT = 2000;
+constexpr chrono::milliseconds DEFAULT_TIMEOUT = 2000ms;
 constexpr int MAX_COMMAND_LENGTH = 128;
 
 /* Clears typeahead from stdin. */
@@ -338,7 +338,7 @@ optional<MoveType> get_player_move(GameType &game, int &game_mode) {
 
 /* Returns a move given by the AI. */
 template <class GameType, class MoveType = typename GameType::move_type>
-MoveType get_ai_move(const GameType &game, Minimax<GameType> &ai, long long timeout = DEFAULT_TIMEOUT) {
+MoveType get_ai_move(const GameType &game, Minimax<GameType> &ai, chrono::milliseconds timeout = DEFAULT_TIMEOUT) {
 	typename Minimax<GameType>::OptimalMove ans;
 	int depth;
 
@@ -349,26 +349,23 @@ MoveType get_ai_move(const GameType &game, Minimax<GameType> &ai, long long time
 
 	// Pretending that the AI is thinking for at least timeout milliseconds.
 	#ifdef _WIN32
-	Sleep(max(0ll, timeout - t.count()));
+	Sleep(max(0ll, timeout.count() - t.count()));
 	#else
-	this_thread::sleep_for(max(chrono::milliseconds(0), chrono::milliseconds(timeout) - t));
+	this_thread::sleep_for(max(0ms, timeout - t));
 	#endif
 
 	// Printing move.
 	printf("%s\n", string(ans.move).c_str());
 
-	// Printing real thinking time.
-	int padding_length = 3 - to_string(t.count() % 1000).size();
-	string thinking_time = to_string(t.count() / 1000) + "." + string(padding_length, '0') + to_string(t.count() % 1000);
-
-	if (t <= chrono::milliseconds(timeout)) {
-		printf(COLOR_GREEN "(depth = %d / time = %ss) " COLOR_WHITE, depth, thinking_time.c_str());
+	// Printing thinking time.
+	if (t <= timeout) {
+		printf(COLOR_GREEN "(depth = %d / time = %.3lfs) " COLOR_WHITE, depth, chrono::duration_cast<chrono::duration<double>>(t).count());
 	}
-	else if (t <= 2 * chrono::milliseconds(timeout)) {
-		printf(COLOR_YELLOW "(depth = %d / time = %ss) " COLOR_WHITE, depth, thinking_time.c_str());
+	else if (t <= 2 * timeout) {
+		printf(COLOR_YELLOW "(depth = %d / time = %.3lfs) " COLOR_WHITE, depth, chrono::duration_cast<chrono::duration<double>>(t).count());
 	}
 	else {
-		printf(COLOR_RED "(depth = %d / time = %ss) " COLOR_WHITE, depth, thinking_time.c_str());
+		printf(COLOR_RED "(depth = %d / time = %.3lfs) " COLOR_WHITE, depth, chrono::duration_cast<chrono::duration<double>>(t).count());
 	}
 
 	// Printing if the AI is playing optimally or not.

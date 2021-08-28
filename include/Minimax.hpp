@@ -141,7 +141,7 @@ public:
 	~Minimax() = default;
 
 	/* Returns the best move obtained with minimax given a time limit in milliseconds. */
-	pair<OptimalMove, int> get_move(const GameType &game_, long long timeout) {
+	pair<OptimalMove, int> get_move(const GameType &game_, chrono::milliseconds timeout) {
 		chrono::milliseconds t;
 		OptimalMove ans;
 
@@ -157,7 +157,7 @@ public:
 			ans = solve(2.0 * GameType::PLAYER_MIN, 2.0 * GameType::PLAYER_MAX, max_depth);
 			max_depth++;
 			t = chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - t_start); // Time since start of function.
-		} while (!ans.is_solved and t < chrono::milliseconds(timeout));
+		} while (!ans.is_solved and t < timeout);
 
 		// Let's not blow up my memory.
 		if (dp.size() >= DP_RESERVE) {
