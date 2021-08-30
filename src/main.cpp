@@ -433,13 +433,13 @@ MoveType get_ai_move(const GameType &game, Minimax<GameType> &ai, chrono::millis
 
 	// Printing thinking time.
 	if (t <= timeout) {
-		printf(COLOR_GREEN "(depth = %d / time = %.3lfs) " COLOR_WHITE, depth, chrono::duration_cast<chrono::duration<double>>(t).count());
+		printf(COLOR_GREEN "(score = %.3lf / time = %.3lfs / depth = %d) " COLOR_WHITE, ans.score, chrono::duration_cast<chrono::duration<double>>(t).count(), depth);
 	}
 	else if (t <= 2 * timeout) {
-		printf(COLOR_YELLOW "(depth = %d / time = %.3lfs) " COLOR_WHITE, depth, chrono::duration_cast<chrono::duration<double>>(t).count());
+		printf(COLOR_YELLOW "(score = %.3lf / time = %.3lfs / depth = %d) " COLOR_WHITE, ans.score, chrono::duration_cast<chrono::duration<double>>(t).count(), depth);
 	}
 	else {
-		printf(COLOR_RED "(depth = %d / time = %.3lfs) " COLOR_WHITE, depth, chrono::duration_cast<chrono::duration<double>>(t).count());
+		printf(COLOR_RED "(score = %.3lf / time = %.3lfs / depth = %d) " COLOR_WHITE, ans.score, chrono::duration_cast<chrono::duration<double>>(t).count(), depth);
 	}
 
 	// Printing if the AI is playing optimally or not.

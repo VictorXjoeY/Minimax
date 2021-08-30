@@ -128,6 +128,9 @@ public:
 	/* Returns the current state. */
 	virtual const StateType& get_state() const final;
 
+	/* Returns all states up to the current state. */
+	virtual const vector<StateType>& get_states() const final;
+
 	/* Returns a move inputed by the player. */
 	virtual optional<MoveType> get_player_move(const string &) const final;
 
@@ -187,6 +190,12 @@ int Game<StateType, MoveType>::get_enemy() const {
 template <class StateType, class MoveType>
 const StateType& Game<StateType, MoveType>::get_state() const {
 	return states_stack.back();
+}
+
+/* Returns all states up to the current state. */
+template <class StateType, class MoveType>
+const vector<StateType>& Game<StateType, MoveType>::get_states() const {
+	return states_stack;
 }
 
 /* Returns a move inputed by the player. */

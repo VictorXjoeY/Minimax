@@ -135,18 +135,12 @@ private:
 
 		// Initializing with worst possible score.
 		ans.score = 2.0 * game.get_enemy();
-		int non_solved_count = 0;
 
 		for (const MoveType &move : moves) {
 			// Recurse.
 			game.make_move(move);
 			OptimalMove ret = solve(alpha, beta, height - 1);
 			game.rollback();
-
-			// Counting the amount of times that we reach a nonoptimal solution.
-			if (!ret.is_solved) {
-				non_solved_count++;
-			}
 
 			if (game.get_player() == GameType::PLAYER_MAX) {
 				// Alpha-beta pruning.
@@ -180,8 +174,7 @@ private:
 		// Marking the state as closed.
 		in_stack.erase(game.get_state());
 
-		// The answer is optimal if the current player won or if we don't hit any nonoptimal states.
-		ans.is_solved = ans.score == static_cast<double>(game.get_player()) or non_solved_count == 0;
+		// The current answer is solved if the chosen move goes to a solved state.
 		ans.height = height;
 
 		return ans;
@@ -199,12 +192,20 @@ public:
 		chrono::milliseconds t;
 		OptimalMove ans;
 
+		// Timing.
+		chrono::time_point<chrono::high_resolution_clock> t_start = chrono::high_resolution_clock::now();
+
 		// Initializing.
 		int max_depth = 0;
 		game = game_;
 
-		// Timing.
-		chrono::time_point<chrono::high_resolution_clock> t_start = chrono::high_resolution_clock::now();
+		// Filling in_stack with states that were already seen.
+		for (const StateType &state : game.get_states()) {
+			in_stack.insert(state);
+		}
+
+		// But not the current state.
+		in_stack.erase(game.get_state());
 
 		// Iterative Deepening Search.
 		do {
