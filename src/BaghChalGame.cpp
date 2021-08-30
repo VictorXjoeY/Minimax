@@ -137,7 +137,7 @@ vector<BaghChalMove> BaghChalGame::get_moves_for_(int player) const {
 /* ---------- PROTECTED ---------- */
 
 /* Returns the current game state converted to State. */
-long long BaghChalGame::get_state_() const {
+BaghChalState BaghChalGame::get_state_() const {
 	long long state = 0;
 	long long pow = 1;
 
@@ -178,12 +178,12 @@ long long BaghChalGame::get_state_() const {
 		state += 2 * pow;
 	}
 
-	return state;
+	return BaghChalState(state);
 }
 
 /* Loads the game given a State. */
-void BaghChalGame::load_game_(const long long &state_) {
-	long long state = state_;
+void BaghChalGame::load_game_(const BaghChalState &state_) {
+	long long state = state_.get();
 
 	// Board.
 	for (int x = 0; x < N; x++) {
@@ -282,7 +282,13 @@ BaghChalGame::BaghChalGame() {
 	memset(board, NONE, sizeof(board));
 	board[0][0] = board[0][N - 1] = board[N - 1][0] = board[N - 1][N - 1] = WOLF;
 	sheeps = 20;
-	Game<long long, BaghChalMove>::initialize_game_();
+	set_player_(SHEEP);
+	Game<BaghChalState, BaghChalMove>::initialize_game_();
+}
+
+BaghChalGame::BaghChalGame(const BaghChalState &state) {
+	load_game_(state);
+	Game<BaghChalState, BaghChalMove>::initialize_game_();
 }
 
 /* Returns true if the movement is valid. */

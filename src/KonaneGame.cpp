@@ -115,20 +115,22 @@ vector<KonaneMove> KonaneGame::get_starting_moves() const {
 /* ---------- PROTECTED ---------- */
 
 /* Returns the current game state converted to State. */
-long long KonaneGame::get_state_() const {
+KonaneState KonaneGame::get_state_() const {
 	if (get_player() == WHITE) {
-		return board | (1ll << N * N);
+		return KonaneState(board | (1ll << N * N));
 	}
 
 	if (get_player() == BLACK) {
-		return board | (1ll << (N * N + 1));
+		return KonaneState(board | (1ll << (N * N + 1)));
 	}
 
-	return board;
+	return KonaneState(board);
 }
 
 /* Loads the game given a State. */
-void KonaneGame::load_game_(const long long &state) {
+void KonaneGame::load_game_(const KonaneState &state_) {
+	long long state = state_.get();
+
 	// Current player.
 	if ((state >> (N * N)) & 1ll) {
 		set_player_(WHITE);
@@ -235,7 +237,13 @@ vector<KonaneMove> KonaneGame::get_moves_() const {
 
 KonaneGame::KonaneGame() {
 	board = (1ll << (N * N)) - 1; // All 36 cells are filled in with pawns. White starts.
-	Game<long long, KonaneMove>::initialize_game_();
+	set_player_(WHITE);
+	Game<KonaneState, KonaneMove>::initialize_game_();
+}
+
+KonaneGame::KonaneGame(const KonaneState &state) {
+	load_game_(state);
+	Game<KonaneState, KonaneMove>::initialize_game_();
 }
 
 /* Returns if the move (xi, yi) -> (xf, yf) is a valid move. */

@@ -56,15 +56,47 @@ public:
 	}
 };
 
-class KonaneGame : public Game<long long, KonaneMove> {
+class KonaneState : public GameState {
+private:
+	long long state;
+
+public:
+	explicit KonaneState(long long state_) {
+		state = state_;
+		hash_ = std::hash<long long>()(state);
+	}
+
+	string serialize() const override {
+		return to_string(state);
+	}
+
+	static KonaneState deserialize(const string &serialized_state) {
+		return KonaneState(stoll(serialized_state));
+	}
+
+	long long get() const {
+		return state;
+	}
+
+	bool operator==(const GameState &rhs) const override {
+		return state == dynamic_cast<const KonaneState &>(rhs).state;
+	}
+};
+
+template<>
+struct std::hash<KonaneState> : public std::hash<GameState> {
+	using std::hash<GameState>::operator();
+};
+
+class KonaneGame : public Game<KonaneState, KonaneMove> {
 private:
 	/* Board is N x N. */
 	static constexpr int N = 6;
 
 	/* Cell state constants. */
-	static constexpr int WHITE = Game<long long, KonaneMove>::PLAYER_MAX;
-	static constexpr int BLACK = Game<long long, KonaneMove>::PLAYER_MIN;
-	static constexpr int NONE = Game<long long, KonaneMove>::PLAYER_NONE;
+	static constexpr int WHITE = Game<KonaneState, KonaneMove>::PLAYER_MAX;
+	static constexpr int BLACK = Game<KonaneState, KonaneMove>::PLAYER_MIN;
+	static constexpr int NONE = Game<KonaneState, KonaneMove>::PLAYER_NONE;
 
 	/* Direction constants. */
 	static constexpr int UP = 0;
@@ -119,10 +151,10 @@ private:
 
 protected:
 	/* Returns the current game state converted to State. */
-	long long get_state_() const override;
+	KonaneState get_state_() const override;
 
 	/* Loads the game given a State. */
-	void load_game_(const long long &) override;
+	void load_game_(const KonaneState &) override;
 
 	/* Performs a move. Assumes that is_valid_move(m) is true. TODO: Remove assumption that is_valid_move(m) is true. */
 	void make_move_(const KonaneMove &) override;
@@ -134,16 +166,17 @@ protected:
 	vector<KonaneMove> get_moves_() const override;
 
 	/* Returns the winner. */
-	using Game<long long, KonaneMove>::get_winner_;
+	using Game<KonaneState, KonaneMove>::get_winner_;
 
 public:
 	KonaneGame();
+	KonaneGame(const KonaneState &);
 
 	/* Returns if the move (xi, yi) -> (xf, yf) is a valid move. */
 	bool is_valid_move(const KonaneMove &) const override;
 
 	/* Returns a value between -1 and 1 indicating how probable it is for the first player to win (1.0) or the other player to win (-1.0). */
-	using Game<long long, KonaneMove>::evaluate;
+	using Game<KonaneState, KonaneMove>::evaluate;
 
 	/* Returns the board for printing. */
 	operator string() const override;

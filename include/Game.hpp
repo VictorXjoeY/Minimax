@@ -4,11 +4,10 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <functional>
 #include <optional>
 
 using namespace std;
-
-constexpr double eps = 1e-9;
 
 /* Base class for Game moves. */
 class GameMove {
@@ -21,10 +20,42 @@ public:
 	virtual operator string() const = 0;
 };
 
+/* Base class for Game states. */
+class GameState {
+protected:
+	optional<size_t> hash_;
+
+public:	
+	virtual ~GameState() = default;
+
+	virtual string serialize() const = 0;
+
+	/* Enforce implementation of this static method */
+	// virtual static GameState deserialize(const string &) = 0;
+
+	virtual size_t hash() const final {
+		#ifdef DEBUG
+		assert(hash_.has_value());
+		#endif
+		return hash_.value();
+	}
+
+	virtual bool operator==(const GameState &rhs) const = 0;
+};
+
+template<>
+struct std::hash<GameState> {
+	size_t operator()(const GameState &game_state) const {
+		return game_state.hash();
+	}
+};
+
 /* Base class for 2-player minimax games. Override required methods and call Game::initialize_game_() at the END of the constructor. */
 template <class StateType, class MoveType>
 class Game {
 private:
+	static constexpr double eps = 1e-9;
+
 	vector<StateType> states_stack; // Game state history.
 	vector<vector<MoveType>> moves_stack; // Possible moves.
 	vector<optional<int>> winner_stack; // Winner, if any.
@@ -32,6 +63,9 @@ private:
 
 protected:
 	Game() = default;
+
+	/* Enforce the implementation of this constructor. Make it call load_game_(state) and then initialize_game()_. */ 
+	// Game(const StateType &);
 
 	/* Returns the current game state converted to State. */
 	virtual StateType get_state_() const = 0;
@@ -101,7 +135,7 @@ public:
 	/* Returns all the possible moves for the current state of the game. */
 	virtual const vector<MoveType>& get_moves() const final;
 
-	/* Performs a move. Assumes that is_valid_move(m) is true. TODO: Maybe remove assumption that is_valid_move(m) is true. */
+	/* Performs a move. Assumes that is_valid_move(m) is true. */
 	virtual void make_move(const MoveType &m) final;
 
 	/* Rolls back to the previous state of the game. */
@@ -125,7 +159,6 @@ public:
 /* Initializes a new game. This function should be called at the end of initialize_game_() of the derived classes. */
 template <class StateType, class MoveType>
 void Game<StateType, MoveType>::initialize_game_() {
-	player_ = PLAYER_MAX;
 	states_stack.push_back(get_state_());
 	moves_stack.push_back(get_moves_());
 	winner_stack.push_back(is_game_over() ? optional(get_winner_()) : nullopt);
@@ -206,7 +239,6 @@ void Game<StateType, MoveType>::rollback() {
 		winner_stack.pop_back();
 		moves_stack.pop_back();
 		states_stack.pop_back();
-		// player_ = get_enemy(); // Not necessary since load_game_() will call set_player_()
 
 		load_game_(states_stack.back());
 	}

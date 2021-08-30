@@ -25,14 +25,46 @@ public:
 	}
 };
 
-class MuTorereGame : public Game<int, MuTorereMove> {
+class MuTorereState : public GameState {
+private:
+	int state;
+
+public:
+	explicit MuTorereState(int state_) {
+		state = state_;
+		hash_ = std::hash<int>()(state);
+	}
+
+	string serialize() const override {
+		return to_string(state);
+	}
+
+	static MuTorereState deserialize(const string &serialized_state) {
+		return MuTorereState(stoi(serialized_state));
+	}
+
+	int get() const {
+		return state;
+	}
+
+	bool operator==(const GameState &rhs) const override {
+		return state == dynamic_cast<const MuTorereState &>(rhs).state;
+	}
+};
+
+template<>
+struct std::hash<MuTorereState> : public std::hash<GameState> {
+	using std::hash<GameState>::operator();
+};
+
+class MuTorereGame : public Game<MuTorereState, MuTorereMove> {
 	/* Circle has N cells and 1 in the center. */
 	static constexpr int N = 8;
 
 	/* Cell state constants. */
-	static constexpr int WHITE = Game<int, MuTorereMove>::PLAYER_MAX;
-	static constexpr int BLACK = Game<int, MuTorereMove>::PLAYER_MIN;
-	static constexpr int NONE = Game<int, MuTorereMove>::PLAYER_NONE;
+	static constexpr int WHITE = Game<MuTorereState, MuTorereMove>::PLAYER_MAX;
+	static constexpr int BLACK = Game<MuTorereState, MuTorereMove>::PLAYER_MIN;
+	static constexpr int NONE = Game<MuTorereState, MuTorereMove>::PLAYER_NONE;
 
 	int board[N + 1]; // 0 through 7 belong to the circle. 8 is the center.
 
@@ -41,10 +73,10 @@ class MuTorereGame : public Game<int, MuTorereMove> {
 
 protected:
 	/* Returns the current game state converted to State. */
-	int get_state_() const override;
+	MuTorereState get_state_() const override;
 
 	/* Loads the game given a State. */
-	void load_game_(const int &) override;
+	void load_game_(const MuTorereState &) override;
 
 	/* Performs a move. Assumes that is_valid_move(m) is true. TODO: Remove assumption that is_valid_move(m) is true. */
 	void make_move_(const MuTorereMove &) override;
@@ -56,16 +88,17 @@ protected:
 	vector<MuTorereMove> get_moves_() const override;
 
 	/* Returns the winner. */
-	using Game<int, MuTorereMove>::get_winner_;
+	using Game<MuTorereState, MuTorereMove>::get_winner_;
 
 public:
 	MuTorereGame();
+	MuTorereGame(const MuTorereState &);
 
 	/* Returns true if the movement is valid. */
 	bool is_valid_move(const MuTorereMove &) const override;
 
 	/* Returns a value between -1 and 1 indicating how probable it is for the first player to win (1.0) or the other player to win (-1.0). */
-	using Game<int, MuTorereMove>::evaluate;
+	using Game<MuTorereState, MuTorereMove>::evaluate;
 
 	/* Returns the board for printing. */
 	operator string() const override;

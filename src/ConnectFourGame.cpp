@@ -85,7 +85,7 @@ bool ConnectFourGame::has_someone_won_() const {
 /* ---------- PROTECTED ---------- */
 
 /* Returns the current game state converted to State. */
-string ConnectFourGame::get_state_() const {
+ConnectFourState ConnectFourGame::get_state_() const {
 	long long yellow = 0, red = 0, pow = 1;
 
 	// Board.
@@ -104,18 +104,19 @@ string ConnectFourGame::get_state_() const {
 
 	// Current player.
 	if (get_player() == YELLOW) {
-		return to_string(yellow) + "y" + to_string(red);
+		return ConnectFourState(to_string(yellow) + "y" + to_string(red));
 	}
 	
 	if (get_player() == RED) {
-		return to_string(yellow) + "r" + to_string(red);
+		return ConnectFourState(to_string(yellow) + "r" + to_string(red));
 	}
 
-	return to_string(yellow) + "n" + to_string(red);
+	return ConnectFourState(to_string(yellow) + "n" + to_string(red));
 }
 
 /* Loads the game given a State. */
-void ConnectFourGame::load_game_(const string &state) {
+void ConnectFourGame::load_game_(const ConnectFourState &state_) {
+	const string &state = state_.get();
 	int pos = state.find("y");
 
 	// Current player.
@@ -201,7 +202,7 @@ vector<ConnectFourMove> ConnectFourGame::get_moves_() const {
 /* Returns the winner. */
 int ConnectFourGame::get_winner_() const {
 	if (has_someone_won_()) {
-		return Game<string, ConnectFourMove>::get_winner_();
+		return Game<ConnectFourState, ConnectFourMove>::get_winner_();
 	}
 
 	return NONE;
@@ -218,7 +219,13 @@ double ConnectFourGame::evaluate_() const {
 
 ConnectFourGame::ConnectFourGame() {
 	memset(board, NONE, sizeof(board));
-	Game<string, ConnectFourMove>::initialize_game_();
+	set_player_(YELLOW);
+	Game<ConnectFourState, ConnectFourMove>::initialize_game_();
+}
+
+ConnectFourGame::ConnectFourGame(const ConnectFourState &state) {
+	load_game_(state);
+	Game<ConnectFourState, ConnectFourMove>::initialize_game_();
 }
 
 /* Returns if the move (x, y) is a valid move. */

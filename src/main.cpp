@@ -1,9 +1,14 @@
-#include <cstdio>
 #include <cassert>
+#include <cstdio>
 #include <cctype>
 #include <chrono>
-#include <vector>
+#include <filesystem>
+#include <fstream>
+#include <iterator>
 #include <optional>
+#include <typeindex>
+#include <unordered_map>
+#include <vector>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -27,6 +32,11 @@ using namespace std;
 
 /* Game constants. */
 const vector<string> GAMES = {"Konane", "MuTorere", "BaghChal", "TicTacToe", "ConnectFour"};
+const unordered_map<type_index, string> GAME_NAME = {{typeid(KonaneGame), "Konane"},
+													 {typeid(MuTorereGame), "MuTorere"},
+													 {typeid(BaghChalGame), "BaghChal"},
+													 {typeid(TicTacToeGame), "TicTacToe"},
+													 {typeid(ConnectFourGame), "ConnectFour"}};
 
 /* Game option constants. */
 constexpr int PLAYER_VS_PLAYER = 1;
@@ -35,6 +45,7 @@ constexpr int CPU_VS_PLAYER = 3;
 constexpr int CPU_VS_CPU = 4;
 
 /* Constants. */
+const filesystem::path SAVES_FOLDER_PATH("./saves");
 constexpr chrono::milliseconds DEFAULT_TIMEOUT = 2000ms;
 constexpr int MAX_COMMAND_LENGTH = 128;
 
@@ -154,12 +165,75 @@ void print_possible_moves(const GameType &game) {
 	printf("\n");
 }
 
+/* Returns filename given the game turn. */
+string get_filename(int turn) {
+	return string("turn") + to_string(turn) + ".dat";
+}
+
+/* Clears all game saves for a certain GameType. */
+template <class GameType>
+void clear_game_saves() {
+	// Getting path.
+	string game_name = GAME_NAME.at(type_index(typeid(GameType)));
+	filesystem::path saves_path = SAVES_FOLDER_PATH / game_name;
+
+	// Clearing folder.
+	filesystem::remove_all(saves_path);
+}
+
+/* Loads or starts a new game. */
+template <class GameType, class StateType = typename GameType::state_type>
+GameType load_game() {
+	string game_name = GAME_NAME.at(type_index(typeid(GameType)));
+	filesystem::path save_path;
+	int turn;
+
+	do {
+		printf("Load a previous save? (0 for new game): ");
+		scanf("%d", &turn);
+		clear_input();
+
+		string filename = get_filename(turn);
+		save_path = SAVES_FOLDER_PATH / game_name / filename;
+	} while (turn != 0 and !filesystem::exists(save_path));
+
+	printf("\n");
+
+	// New game.
+	if (turn == 0) {
+		return GameType();
+	}
+
+	// Reading file.
+	ifstream file(save_path);
+	string serialized_game_state((istreambuf_iterator<char>(file)), (istreambuf_iterator<char>()));
+
+	return GameType(StateType::deserialize(serialized_game_state));
+}
+
+/* Auto-saves game state into a file. */
+template <class GameType>
+void save_game(const GameType &game) {
+	// Getting path.
+	string game_name = GAME_NAME.at(type_index(typeid(GameType)));
+	string filename = get_filename(game.get_turn());
+	filesystem::path save_path = SAVES_FOLDER_PATH / game_name / filename;
+
+	// Writing to file.
+	filesystem::create_directories(save_path.parent_path());
+	ofstream file(save_path);
+	file << game.get_state().serialize();
+}
+
 /* Prints what should be printed every iteration of the game loop. */
-template <class GameType, class MoveType = typename GameType::move_type>
+template <class GameType>
 void game_loop_print(const GameType &game) {
 	// Printing the board.
 	printf(COLOR_BRIGHT_BLACK "\n========== TURN %03d ==========\n\n" COLOR_WHITE, game.get_turn());
 	printf("%s\n", string(game).c_str());
+
+	// Saving the board.
+	save_game(game);
 	
 	// Printing possible moves.
 	print_possible_moves(game);
@@ -399,8 +473,11 @@ template <class GameType, class MoveType = typename GameType::move_type>
 void game_loop() {
 	// Initializing.
 	Minimax<GameType> ai;
-	GameType game;
 	int game_mode = get_game_mode();
+	GameType game = load_game<GameType>();
+
+	// Clearing old saves.
+	clear_game_saves<GameType>();
 
 	do {
 		// Game loop.

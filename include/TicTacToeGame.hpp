@@ -13,11 +13,11 @@ public:
 	TicTacToeCell() : x(-1), y(-1) {}
 	TicTacToeCell(int x_, int y_) : x(x_), y(y_) {}
 
-	bool operator == (const TicTacToeCell &c) const {
+	bool operator==(const TicTacToeCell &c) const {
 		return x == c.x and y == c.y;
 	}
 
-	bool operator != (const TicTacToeCell &c) const {
+	bool operator!=(const TicTacToeCell &c) const {
 		return !(*this == c);
 	}
 
@@ -39,15 +39,47 @@ public:
 	}
 };
 
-class TicTacToeGame : public Game<int, TicTacToeMove> {
+class TicTacToeState : public GameState {
+private:
+	int state;
+
+public:
+	explicit TicTacToeState(int state_) {
+		state = state_;
+		hash_ = std::hash<int>()(state);
+	}
+
+	string serialize() const override {
+		return to_string(state);
+	}
+
+	static TicTacToeState deserialize(const string &serialized_state) {
+		return TicTacToeState(stoi(serialized_state));
+	}
+
+	int get() const {
+		return state;
+	}
+
+	bool operator==(const GameState &rhs) const override {
+		return state == dynamic_cast<const TicTacToeState &>(rhs).state;
+	}
+};
+
+template<>
+struct std::hash<TicTacToeState> : public std::hash<GameState> {
+	using std::hash<GameState>::operator();
+};
+
+class TicTacToeGame : public Game<TicTacToeState, TicTacToeMove> {
 private:
 	/* Board is N x N. */
 	static constexpr int N = 3;
 
 	/* Cell state constants. */
-	static constexpr int CROSS = Game<int, TicTacToeMove>::PLAYER_MAX;
-	static constexpr int CIRCLE = Game<int, TicTacToeMove>::PLAYER_MIN;
-	static constexpr int NONE = Game<int, TicTacToeMove>::PLAYER_NONE;
+	static constexpr int CROSS = Game<TicTacToeState, TicTacToeMove>::PLAYER_MAX;
+	static constexpr int CIRCLE = Game<TicTacToeState, TicTacToeMove>::PLAYER_MIN;
+	static constexpr int NONE = Game<TicTacToeState, TicTacToeMove>::PLAYER_NONE;
 
 	/* Returns if the coordinate is inside the board. */
 	static bool is_inside(const TicTacToeCell &c) {
@@ -61,10 +93,10 @@ private:
 
 protected:
 	/* Returns the current game state converted to State. */
-	int get_state_() const override;
+	TicTacToeState get_state_() const override;
 
 	/* Loads the game given a State. */
-	void load_game_(const int &) override;
+	void load_game_(const TicTacToeState &) override;
 
 	/* Performs a move. Assumes that is_valid_move(m) is true. TODO: Remove assumption that is_valid_move(m) is true. */
 	void make_move_(const TicTacToeMove &) override;
@@ -80,12 +112,13 @@ protected:
 
 public:
 	TicTacToeGame();
+	TicTacToeGame(const TicTacToeState &);
 
 	/* Returns if the move (x, y) is a valid move. */
 	bool is_valid_move(const TicTacToeMove &) const override;
 
 	/* Returns a value between -1 and 1 indicating how probable it is for the first player to win (1.0) or the other player to win (-1.0). */
-	using Game<int, TicTacToeMove>::evaluate;
+	using Game<TicTacToeState, TicTacToeMove>::evaluate;
 
 	/* Returns the board for printing. */
 	operator string() const override;

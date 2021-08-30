@@ -58,16 +58,48 @@ public:
 	}
 };
 
-class BaghChalGame : public Game<long long, BaghChalMove> {
+class BaghChalState : public GameState {
+private:
+	long long state;
+
+public:
+	explicit BaghChalState(long long state_) {
+		state = state_;
+		hash_ = std::hash<long long>()(state);
+	}
+
+	string serialize() const override {
+		return to_string(state);
+	}
+
+	static BaghChalState deserialize(const string &serialized_state) {
+		return BaghChalState(stoll(serialized_state));
+	}
+
+	long long get() const {
+		return state;
+	}
+
+	bool operator==(const GameState &rhs) const override {
+		return state == dynamic_cast<const BaghChalState &>(rhs).state;
+	}
+};
+
+template<>
+struct std::hash<BaghChalState> : public std::hash<GameState> {
+	using std::hash<GameState>::operator();
+};
+
+class BaghChalGame : public Game<BaghChalState, BaghChalMove> {
 private:
 	/* Circle has N cells and 1 in the center. */
 	static constexpr int N = 5;
 	static constexpr int D = 5;
 
 	/* Cell state constants. */
-	static constexpr int SHEEP = Game<long long, BaghChalMove>::PLAYER_MAX;
-	static constexpr int WOLF = Game<long long, BaghChalMove>::PLAYER_MIN;
-	static constexpr int NONE = Game<long long, BaghChalMove>::PLAYER_NONE;
+	static constexpr int SHEEP = Game<BaghChalState, BaghChalMove>::PLAYER_MAX;
+	static constexpr int WOLF = Game<BaghChalState, BaghChalMove>::PLAYER_MIN;
+	static constexpr int NONE = Game<BaghChalState, BaghChalMove>::PLAYER_NONE;
 
 	// UP, RIGHT, DOWN, LEFT, UPRIGHT, DOWNRIGHT, DOWNLEFT, UPLEFT
 	static constexpr int UP = 0;
@@ -140,10 +172,10 @@ private:
 
 protected:
 	/* Returns the current game state converted to State. */
-	long long get_state_() const override;
+	BaghChalState get_state_() const override;
 
 	/* Loads the game given a State. */
-	void load_game_(const long long &) override;
+	void load_game_(const BaghChalState &) override;
 
 	/* Performs a move. Assumes that is_valid_move(m) is true. TODO: Remove assumption that is_valid_move(m) is true. */
 	void make_move_(const BaghChalMove &) override;
@@ -155,13 +187,14 @@ protected:
 	vector<BaghChalMove> get_moves_() const override;
 
 	/* Returns the winner. */
-	using Game<long long, BaghChalMove>::get_winner_;
+	using Game<BaghChalState, BaghChalMove>::get_winner_;
 
 	/* Returns a value between -1 and 1 indicating how probable it is for the first player to win (1.0) or the other player to win (-1.0). */
 	double evaluate_() const override;
 
 public:
 	BaghChalGame();
+	BaghChalGame(const BaghChalState &);
 
 	/* Returns true if the movement is valid. */
 	bool is_valid_move(const BaghChalMove &) const override;

@@ -27,7 +27,7 @@ int MuTorereGame::get_empty_position() {
 /* ---------- PROTECTED ---------- */
 
 /* Returns the current game state converted to State. */
-int MuTorereGame::get_state_() const {
+MuTorereState MuTorereGame::get_state_() const {
 	int state = 0;
 	int pow = 1;
 
@@ -57,12 +57,12 @@ int MuTorereGame::get_state_() const {
 		state += 2 * pow;
 	}
 
-	return state;
+	return MuTorereState(state);
 }
 
 /* Loads the game given a State. */
-void MuTorereGame::load_game_(const int &state_) {
-	int state = state_;
+void MuTorereGame::load_game_(const MuTorereState &state_) {
+	int state = state_.get();
 
 	// Board.
 	for (int i = 0; i < N + 1; i++) {
@@ -137,7 +137,13 @@ MuTorereGame::MuTorereGame() {
 
 	board[N] = NONE;
 
-	Game<int, MuTorereMove>::initialize_game_();
+	set_player_(WHITE);
+	Game<MuTorereState, MuTorereMove>::initialize_game_();
+}
+
+MuTorereGame::MuTorereGame(const MuTorereState &state) {
+	load_game_(state);
+	Game<MuTorereState, MuTorereMove>::initialize_game_();
 }
 
 /* Returns true if the movement is valid. */

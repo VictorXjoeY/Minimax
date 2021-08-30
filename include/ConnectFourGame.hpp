@@ -18,16 +18,48 @@ public:
 	}
 };
 
-class ConnectFourGame : public Game<string, ConnectFourMove> {
+class ConnectFourState : public GameState {
+private:
+	string state;
+
+public:
+	explicit ConnectFourState(string state_) {
+		state = state_;
+		hash_ = std::hash<string>()(state);
+	}
+
+	string serialize() const override {
+		return state;
+	}
+
+	static ConnectFourState deserialize(const string &serialized_state) {
+		return ConnectFourState(serialized_state);
+	}
+
+	string get() const {
+		return state;
+	}
+
+	bool operator==(const GameState &rhs) const override {
+		return state == dynamic_cast<const ConnectFourState &>(rhs).state;
+	}
+};
+
+template<>
+struct std::hash<ConnectFourState> : public std::hash<GameState> {
+	using std::hash<GameState>::operator();
+};
+
+class ConnectFourGame : public Game<ConnectFourState, ConnectFourMove> {
 private:
 	/* Board is N x M. */
 	static constexpr int N = 6;
 	static constexpr int M = 7;
 
 	/* Cell state constants. */
-	static constexpr int YELLOW = Game<string, ConnectFourMove>::PLAYER_MAX;
-	static constexpr int RED = Game<string, ConnectFourMove>::PLAYER_MIN;
-	static constexpr int NONE = Game<string, ConnectFourMove>::PLAYER_NONE;
+	static constexpr int YELLOW = Game<ConnectFourState, ConnectFourMove>::PLAYER_MAX;
+	static constexpr int RED = Game<ConnectFourState, ConnectFourMove>::PLAYER_MIN;
+	static constexpr int NONE = Game<ConnectFourState, ConnectFourMove>::PLAYER_NONE;
 
 	/* UPRIGHT, RIGHT, DOWNRIGHT, DOWN */
 	static constexpr int DIR[4][2] = {{-1, 1}, {0, 1}, {1, 1}, {1, 0}};
@@ -40,7 +72,6 @@ private:
 	static constexpr int TOTAL_POSSIBILITIES = UPRIGHT_POSSIBILITIES + RIGHT_POSSIBILITIES + DOWNRIGHT_POSSIBILITIES + DOWN_POSSIBILITIES;
 	static constexpr int MAX_SCORE = 5 * TOTAL_POSSIBILITIES; // Considering every cell is filled with the same color.
 	
-
 	/* Returns if the coordinate is inside the board. */
 	static bool is_inside(int x, int y) {
 		return 0 <= x and x < N and 0 <= y and y < M;
@@ -56,10 +87,10 @@ private:
 
 protected:
 	/* Returns the current game state converted to State. */
-	string get_state_() const override;
+	ConnectFourState get_state_() const override;
 
 	/* Loads the game given a State. */
-	void load_game_(const string &) override;
+	void load_game_(const ConnectFourState &) override;
 
 	/* Performs a move. Assumes that is_valid_move(m) is true. TODO: Remove assumption that is_valid_move(m) is true. */
 	void make_move_(const ConnectFourMove &) override;
@@ -78,6 +109,7 @@ protected:
 
 public:
 	ConnectFourGame();
+	ConnectFourGame(const ConnectFourState &);
 
 	/* Returns if the move (x, y) is a valid move. */
 	bool is_valid_move(const ConnectFourMove &) const override;

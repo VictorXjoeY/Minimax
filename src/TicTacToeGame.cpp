@@ -74,7 +74,7 @@ bool TicTacToeGame::has_someone_won_() const {
 /* ---------- PROTECTED ---------- */
 
 /* Returns the current game state converted to State. */
-int TicTacToeGame::get_state_() const {
+TicTacToeState TicTacToeGame::get_state_() const {
 	int state = 0;
 	int pow = 1;
 
@@ -106,12 +106,12 @@ int TicTacToeGame::get_state_() const {
 		state += 2 * pow;
 	}
 
-	return state;
+	return TicTacToeState(state);
 }
 
 /* Loads the game given a State. */
-void TicTacToeGame::load_game_(const int &state_) {
-	int state = state_;
+void TicTacToeGame::load_game_(const TicTacToeState &state_) {
+	int state = state_.get();
 
 	// Board.
 	for (int x = 0; x < N; x++) {
@@ -184,7 +184,7 @@ vector<TicTacToeMove> TicTacToeGame::get_moves_() const {
 /* Returns the winner. */
 int TicTacToeGame::get_winner_() const {
 	if (has_someone_won_()) {
-		return Game<int, TicTacToeMove>::get_winner_();
+		return Game<TicTacToeState, TicTacToeMove>::get_winner_();
 	}
 
 	return NONE;
@@ -194,7 +194,13 @@ int TicTacToeGame::get_winner_() const {
 
 TicTacToeGame::TicTacToeGame() {
 	memset(board, NONE, sizeof(board));
-	Game<int, TicTacToeMove>::initialize_game_();
+	set_player_(CROSS);
+	Game<TicTacToeState, TicTacToeMove>::initialize_game_();
+}
+
+TicTacToeGame::TicTacToeGame(const TicTacToeState &state) {
+	load_game_(state);
+	Game<TicTacToeState, TicTacToeMove>::initialize_game_();
 }
 
 /* Returns if the move (x, y) is a valid move. */
