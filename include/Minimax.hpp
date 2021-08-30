@@ -22,15 +22,16 @@ public:
 
 	class OptimalMove {
 	public:
-		MoveType move = MoveType();
+		MoveType move = MoveType(); // The move itself
 		double score = 0.0; // [-1, +1]
 		bool is_solved = false; // True if one player can force a victory or if all states in this node's subtree have known results.
-		optional<int> winner;
+		optional<int> winner = nullopt; // Did someone win? Who? Max, Min or Draw (including infinite loop)?
 		int turn = -1; // In which turn this move ends, relative to the start of the game.
+		int height = -1; // How many moves ahead will I explore after the current move?
 
 		OptimalMove() {}
 
-		OptimalMove(const MoveType &move_, double score_, bool is_solved_, optional<int> winner_, int turn_) {
+		OptimalMove(const MoveType &move_, double score_, bool is_solved_, optional<int> winner_, int turn_, int height_) {
 			#ifdef DEBUG
 			assert(static_cast<double>(GameType::PLAYER_MIN) <= score_ and score_ <= static_cast<double>(GameType::PLAYER_MAX));
 			#endif
@@ -40,6 +41,7 @@ public:
 			is_solved = is_solved_;
 			winner = winner_;
 			turn = turn_;
+			height = height_;
 		}
 	};
 
@@ -52,31 +54,80 @@ private:
 	vector<OptimalMove> move_history; // Moves returned.
 	GameType game; // Game.
 
+	/* Returns true if A is a better move than B for PLAYER_MAX. */
+	bool better_max(const OptimalMove &a, const OptimalMove &b) {
+		if (a.score != b.score) { // Take best score.
+			return a.score > b.score;
+		}
+
+		if (a.score == static_cast<double>(GameType::PLAYER_MAX)) { // Already won, so take the shortest path.
+			#ifdef DEBUG
+			assert(a.is_solved and b.is_solved); // Best score is only possible when it has been solved.
+			#endif
+			return a.turn < b.turn;
+		}
+
+		if (a.is_solved == b.is_solved) { // Not a definitive victory and both are solved/unsolved, so take the longest path.
+			return a.turn > b.turn;
+		}
+
+		if (a.score >= static_cast<double>(GameType::PLAYER_NONE)) { // Not losing, so prefer solved.
+			return a.is_solved > b.is_solved;
+		}
+		
+		// Losing, so prefer unsolved.
+		return a.is_solved < b.is_solved;
+	}
+
+	/* Returns true if A is a better move than B for PLAYER_MIN. */
+	bool better_min(const OptimalMove &a, const OptimalMove &b) {
+		if (a.score != b.score) { // Take best score.
+			return a.score < b.score;
+		}
+
+		if (a.score == static_cast<double>(GameType::PLAYER_MIN)) { // Already won, so take the shortest path.
+			#ifdef DEBUG
+			assert(a.is_solved and b.is_solved); // Best score is only possible when it has been solved.
+			#endif
+			return a.turn < b.turn;
+		}
+
+		if (a.is_solved == b.is_solved) { // Not a definitive victory and both are solved/unsolved, so take the longest path.
+			return a.turn > b.turn;
+		}
+
+		if (a.score <= static_cast<double>(GameType::PLAYER_NONE)) { // Not losing, so prefer solved.
+			return a.is_solved > b.is_solved;
+		}
+		
+		// Losing, so prefer unsolved.
+		return a.is_solved < b.is_solved;
+	}
+
 	/* Recursive function that runs the Minimax algorithm with alpha-beta pruning. */
 	OptimalMove solve(double alpha, double beta, int height) {
 		// Leaf node.
 		if (game.is_game_over()) {
-			return OptimalMove(MoveType(), game.get_winner().value(), true, game.get_winner(), game.get_turn());
+			return OptimalMove(MoveType(), game.get_winner().value(), true, game.get_winner(), game.get_turn(), 0);
 		}
 
 		vector<MoveType> moves = game.get_moves();
-		assert(!moves.empty());
 
 		// If we are trying to calculate a state which is still open (in stack) we have hit a cycle and we return 0.
 		if (in_stack.count(game.get_state())) {
-			return OptimalMove(moves[0], GameType::PLAYER_NONE, true, nullopt, game.get_turn()); // isOptimal is true because there are no more possibilities for this subtree.
+			return OptimalMove(moves[0], GameType::PLAYER_NONE, true, nullopt, numeric_limits<int>::max(), 0); // is_solved is true because there are no more possibilities for this "subtree".
 		}
 
-		// If we are trying to calculate a state which was already calculated higher up on the tree then return its value.
+		// If we are trying to calculate a state which was explored further than it will be explored now then return its value.
 		OptimalMove &ans = dp[game.get_state()];
 
-		if (ans.is_solved or ans.turn >= game.get_turn() + height) {
+		if (ans.is_solved or ans.height >= height) {
 			return ans;
 		}
 
 		// If we are too deep then evaluate the board.
-		if (height <= 0) {
-			return OptimalMove(moves[0], game.evaluate(), false, nullopt, game.get_turn());
+		if (height == 0) {
+			return OptimalMove(moves[0], game.evaluate(), false, nullopt, game.get_turn(), 0);
 		}
 
 		// Marking the state as open.
@@ -98,22 +149,24 @@ private:
 			}
 
 			if (game.get_player() == GameType::PLAYER_MAX) {
-				// Max.
-				if (ret.score > ans.score or (ret.score == ans.score and ret.turn > ans.turn)) {
-					ans = OptimalMove(move, ret.score, false, ret.winner, ret.turn);
-				}
-
 				// Alpha-beta pruning.
-				alpha = max(alpha, ans.score);
+				alpha = max(alpha, ret.score);
+
+				// Max.
+				if (better_max(ret, ans)) {
+					ans = ret;
+					ans.move = move;
+				}
 			}
 			else if (game.get_player() == GameType::PLAYER_MIN) {
-				// Min.
-				if (ret.score < ans.score or (ret.score == ans.score and ret.turn > ans.turn)) {
-					ans = OptimalMove(move, ret.score, false, ret.winner, ret.turn);
-				}
-
 				// Alpha-beta pruning.
-				beta = min(beta, ans.score);
+				beta = min(beta, ret.score);
+				
+				// Min.
+				if (better_min(ret, ans)) {
+					ans = ret;
+					ans.move = move;
+				}
 			}
 			else {
 				assert(false);
@@ -129,6 +182,7 @@ private:
 
 		// The answer is optimal if the current player won or if we don't hit any nonoptimal states.
 		ans.is_solved = ans.score == static_cast<double>(game.get_player()) or non_solved_count == 0;
+		ans.height = height;
 
 		return ans;
 	}
