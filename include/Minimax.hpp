@@ -46,12 +46,11 @@ public:
 	};
 
 private:
-	static constexpr int DP_RESERVE = 10000000;
-	static constexpr int IN_STACK_RESERVE = 10000;
+	static constexpr int DP_RESERVE = 1024 * 1024 * 1024 / (sizeof(StateType) + sizeof(OptimalMove)); // 1GB for dp
+	static constexpr int IN_STACK_RESERVE = 1024 * 1024 / sizeof(StateType); // 1MB for in_stack
 
 	unordered_map<StateType, OptimalMove> dp; // Dynamic Programming for already seen game states.
 	unordered_set<StateType> in_stack; // Cycle detection.
-	vector<OptimalMove> move_history; // Moves returned.
 	GameType game; // Game.
 
 	/* Returns true if A is a better move than B for PLAYER_MAX. */
@@ -188,8 +187,8 @@ public:
 	~Minimax() = default;
 
 	/* Returns the best move obtained with minimax given a time limit in milliseconds. */
-	pair<OptimalMove, int> get_move(const GameType &game_, chrono::milliseconds timeout) {
-		chrono::milliseconds t;
+	pair<OptimalMove, int> get_move(const GameType &game_, chrono::duration<long double> timeout) {
+		chrono::duration<long double> t;
 		OptimalMove ans;
 
 		// Timing.
@@ -211,30 +210,13 @@ public:
 		do {
 			ans = solve(2.0 * GameType::PLAYER_MIN, 2.0 * GameType::PLAYER_MAX, max_depth);
 			max_depth++;
-			t = chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - t_start); // Time since start of function.
+			t = chrono::high_resolution_clock::now() - t_start; // Time since start of function.
 		} while (!ans.is_solved and t < timeout);
 
 		// Let's not blow up my memory.
 		if (dp.size() >= DP_RESERVE) {
 			dp.clear();
 		}
-
-		// TODO: Fix BaghChal dumb sheep bug
-		#ifdef DEBUG
-		static bool crash_next_turn = false;
-
-		if (crash_next_turn) {
-			assert(false);
-		}
-
-		if (!move_history.empty() and !move_history.back().is_solved and ans.is_solved) {
-			if (move_history.back().turn >= ans.turn) {
-				crash_next_turn = true;
-			}
-		}
-
-		move_history.push_back(ans);
-		#endif
 
 		// Returning optimal move.
 		return {ans, max_depth - 1};

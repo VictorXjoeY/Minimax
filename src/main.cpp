@@ -46,7 +46,7 @@ constexpr int CPU_VS_CPU = 4;
 
 /* Constants. */
 const filesystem::path SAVES_FOLDER_PATH("./saves");
-constexpr chrono::milliseconds DEFAULT_TIMEOUT = 2000ms;
+constexpr chrono::duration<long double> DEFAULT_TIMEOUT = 2.0s;
 constexpr int MAX_COMMAND_LENGTH = 128;
 
 /* Clears typeahead from stdin. */
@@ -412,35 +412,30 @@ optional<MoveType> get_player_move(GameType &game, int &game_mode) {
 
 /* Returns a move given by the AI. */
 template <class GameType, class MoveType = typename GameType::move_type>
-MoveType get_ai_move(const GameType &game, Minimax<GameType> &ai, chrono::milliseconds timeout = DEFAULT_TIMEOUT) {
+MoveType get_ai_move(const GameType &game, Minimax<GameType> &ai, chrono::duration<long double> timeout = DEFAULT_TIMEOUT) {
 	typename Minimax<GameType>::OptimalMove ans;
 	int depth;
 
 	// Getting optimal move.
 	chrono::time_point<chrono::high_resolution_clock> t_start = chrono::high_resolution_clock::now();
 	tie(ans, depth) = ai.get_move(game, timeout);
-	chrono::milliseconds t = chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - t_start);
+	chrono::duration<long double> t = chrono::high_resolution_clock::now() - t_start;
 
 	// Pretending that the AI is thinking for at least timeout milliseconds.
 	#ifdef _WIN32
-	Sleep(max(0ll, timeout.count() - t.count()));
+	Sleep(max(0ll, chrono::round<chrono::milliseconds>(timeout - t).count()));
 	#else
-	this_thread::sleep_for(max(0ms, timeout - t));
+	this_thread::sleep_for(max(0.0s, timeout - t));
 	#endif
 
 	// Printing move.
 	printf("%s\n", string(ans.move).c_str());
 
+	string score_color = ans.score == 0.0 ? COLOR_YELLOW : (ans.score > 0.0 ? COLOR_RED : COLOR_BLUE);
+	string thinking_time_color = t <= timeout ? COLOR_GREEN : (t <= 2 * timeout ? COLOR_YELLOW : COLOR_RED);
+
 	// Printing thinking time.
-	if (t <= timeout) {
-		printf(COLOR_GREEN "(score = %.3lf / time = %.3lfs / depth = %d) " COLOR_WHITE, ans.score, chrono::duration_cast<chrono::duration<double>>(t).count(), depth);
-	}
-	else if (t <= 2 * timeout) {
-		printf(COLOR_YELLOW "(score = %.3lf / time = %.3lfs / depth = %d) " COLOR_WHITE, ans.score, chrono::duration_cast<chrono::duration<double>>(t).count(), depth);
-	}
-	else {
-		printf(COLOR_RED "(score = %.3lf / time = %.3lfs / depth = %d) " COLOR_WHITE, ans.score, chrono::duration_cast<chrono::duration<double>>(t).count(), depth);
-	}
+	printf("(%sscore = %.3lf" COLOR_WHITE " / %stime = %.3Lfs" COLOR_WHITE " / depth = %d) ", score_color.c_str(), ans.score, thinking_time_color.c_str(), t.count(), depth);
 
 	// Printing if the AI is playing optimally or not.
 	if (ans.is_solved) {
@@ -448,8 +443,8 @@ MoveType get_ai_move(const GameType &game, Minimax<GameType> &ai, chrono::millis
 
 		if (ans.winner.has_value()) {
 			if (ans.winner.value() != GameType::PLAYER_NONE) {
-				string winner_color = game.get_player() == ans.winner.value() ? COLOR_GREEN : COLOR_RED;
-				printf("%s(Player %d will win in at most %d moves)\n" COLOR_WHITE, winner_color.c_str(), get_player_number<GameType>(ans.winner.value()), ans.turn - game.get_turn() - 1);
+				print_player<GameType>(ans.winner.value());
+				printf(" will " COLOR_GREEN "win" COLOR_WHITE " in at most %d moves\n", ans.turn - game.get_turn() - 1);
 			}
 			else {
 				printf("(The game will end in a " COLOR_YELLOW "draw" COLOR_WHITE " in at most %d moves)\n", ans.turn - game.get_turn() - 1);
