@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cassert>
+#include <cmath>
 #include <string>
 #include <vector>
 #include <algorithm>
@@ -54,8 +55,6 @@ struct std::hash<GameState> {
 template <class StateType, class MoveType>
 class Game {
 private:
-	static constexpr double eps = 1e-9;
-
 	vector<StateType> states_stack; // Game state history.
 	vector<vector<MoveType>> moves_stack; // Possible moves.
 	vector<optional<int>> winner_stack; // Winner, if any.
@@ -265,17 +264,21 @@ optional<int> Game<StateType, MoveType>::get_winner() const {
 /* Returns a value between -1 and 1 indicating how probable it is for the first player to win (1.0) or the other player to win (-1.0). */
 template <class StateType, class MoveType>
 double Game<StateType, MoveType>::evaluate() const {
+	double score_max = static_cast<double>(PLAYER_MAX);
+	double score_min = static_cast<double>(PLAYER_MIN);
+	double score_none = static_cast<double>(PLAYER_NONE);
+
 	if (is_game_over()) {
 		if (get_winner() == PLAYER_MAX) {
-			return static_cast<double>(PLAYER_MAX);
+			return score_max;
 		}
 
 		if (get_winner() == PLAYER_MIN) {
-			return static_cast<double>(PLAYER_MIN);
+			return score_min;
 		}
 
-		return static_cast<double>(PLAYER_NONE);
+		return score_none;
 	}
-	
-	return clamp(evaluate_(), static_cast<double>(PLAYER_MIN) + eps, static_cast<double>(PLAYER_MAX) - eps);
+
+	return clamp(evaluate_(), nextafter(score_min, score_max), nextafter(score_max, score_min));
 }
