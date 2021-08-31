@@ -432,7 +432,7 @@ MoveType get_ai_move(const GameType &game, Minimax<GameType> &ai, chrono::durati
 	printf("%s\n", string(ans.move).c_str());
 
 	string score_color = ans.score == 0.0 ? COLOR_YELLOW : (ans.score > 0.0 ? COLOR_RED : COLOR_BLUE);
-	string thinking_time_color = t <= timeout ? COLOR_GREEN : (t <= 2 * timeout ? COLOR_YELLOW : COLOR_RED);
+	string thinking_time_color = t <= timeout ? COLOR_GREEN : (t <= 2.0 * timeout ? COLOR_YELLOW : COLOR_RED);
 
 	// Printing thinking time.
 	printf("(%sscore = %.3lf" COLOR_WHITE " / %stime = %.3Lfs" COLOR_WHITE " / depth = %d) ", score_color.c_str(), ans.score, thinking_time_color.c_str(), t.count(), depth);

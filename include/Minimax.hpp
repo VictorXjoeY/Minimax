@@ -52,6 +52,7 @@ private:
 	unordered_map<StateType, OptimalMove> dp; // Dynamic Programming for already seen game states.
 	unordered_set<StateType> in_stack; // Cycle detection.
 	GameType game; // Game.
+	long long previous_depths_move_count, next_depth_move_count; // Used for estimating the time cost of Minimax::solve
 
 	/* Returns true if A is a better move than B for PLAYER_MAX. */
 	bool better_max(const OptimalMove &a, const OptimalMove &b) {
@@ -126,8 +127,11 @@ private:
 
 		// If we are too deep then evaluate the board.
 		if (height == 0) {
+			next_depth_move_count += moves.size();
 			return OptimalMove(moves[0], game.evaluate(), false, nullopt, game.get_turn(), 0);
 		}
+
+		previous_depths_move_count += moves.size();
 
 		// Marking the state as open.
 		in_stack.insert(game.get_state());
@@ -188,11 +192,12 @@ public:
 
 	/* Returns the best move obtained with minimax given a time limit in milliseconds. */
 	pair<OptimalMove, int> get_move(const GameType &game_, chrono::duration<long double> timeout) {
-		chrono::duration<long double> t;
+		chrono::time_point<chrono::high_resolution_clock> get_move_start_time_point, previous_solve_start_time_point;
+		chrono::duration<long double> total_time, last_solve_time, next_solve_time;
 		OptimalMove ans;
 
 		// Timing.
-		chrono::time_point<chrono::high_resolution_clock> t_start = chrono::high_resolution_clock::now();
+		get_move_start_time_point = chrono::high_resolution_clock::now();
 
 		// Initializing.
 		int max_depth = 0;
@@ -208,10 +213,24 @@ public:
 
 		// Iterative Deepening Search.
 		do {
-			ans = solve(2.0 * GameType::PLAYER_MIN, 2.0 * GameType::PLAYER_MAX, max_depth);
-			max_depth++;
-			t = chrono::high_resolution_clock::now() - t_start; // Time since start of function.
-		} while (!ans.is_solved and t < timeout);
+			// Calling solve.
+			previous_solve_start_time_point = chrono::high_resolution_clock::now();
+			previous_depths_move_count = next_depth_move_count = 0;
+			ans = solve(2.0 * GameType::PLAYER_MIN, 2.0 * GameType::PLAYER_MAX, max_depth++);
+			last_solve_time = chrono::high_resolution_clock::now() - previous_solve_start_time_point;
+
+			// Predicting how much it will take for another solve call.
+			if (previous_depths_move_count == 0) {
+				next_solve_time = 0.0s;
+			}
+			else {
+				double average_branching_factor = static_cast<double>(previous_depths_move_count + next_depth_move_count) / static_cast<double>(previous_depths_move_count);
+				next_solve_time = average_branching_factor * last_solve_time;
+			}
+
+			// Calculating total time elapsed so far.
+			total_time = chrono::high_resolution_clock::now() - get_move_start_time_point;
+		} while (!ans.is_solved and total_time + next_solve_time < 2.0 * timeout);
 
 		// Let's not blow up my memory.
 		if (dp.size() >= DP_RESERVE) {
