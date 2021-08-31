@@ -67,8 +67,15 @@ private:
 			return a.turn < b.turn;
 		}
 
-		if (a.is_solved == b.is_solved) { // Not a definitive victory and both are solved/unsolved, so take the longest path.
+		if (a.score == static_cast<double>(GameType::PLAYER_MIN)) { // Already lost, so take the longest path.
+			#ifdef DEBUG
+			assert(a.is_solved and b.is_solved); // Worst score is only possible when it has been solved.
+			#endif
 			return a.turn > b.turn;
+		}
+
+		if (a.is_solved == b.is_solved) { // Not a definitive victory or loss and both are solved/unsolved, so take the route which I'm most informed about.
+			return a.height > b.height;
 		}
 
 		if (a.score >= static_cast<double>(GameType::PLAYER_NONE)) { // Not losing, so prefer solved.
@@ -92,8 +99,15 @@ private:
 			return a.turn < b.turn;
 		}
 
-		if (a.is_solved == b.is_solved) { // Not a definitive victory and both are solved/unsolved, so take the longest path.
+		if (a.score == static_cast<double>(GameType::PLAYER_MAX)) { // Already lost, so take the longest path.
+			#ifdef DEBUG
+			assert(a.is_solved and b.is_solved); // Worst score is only possible when it has been solved.
+			#endif
 			return a.turn > b.turn;
+		}
+
+		if (a.is_solved == b.is_solved) { // Not a definitive victory or loss and both are solved/unsolved, so take the longest path.
+			return a.height > b.height;
 		}
 
 		if (a.score <= static_cast<double>(GameType::PLAYER_NONE)) { // Not losing, so prefer solved.
@@ -233,9 +247,7 @@ public:
 		} while (!ans.is_solved and total_time + next_solve_time < 2.0 * timeout);
 
 		// Let's not blow up my memory.
-		if (dp.size() >= DP_RESERVE) {
-			dp.clear();
-		}
+		dp.clear();
 
 		// Returning optimal move.
 		return {ans, max_depth - 1};
