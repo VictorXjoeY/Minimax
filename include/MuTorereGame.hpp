@@ -27,16 +27,16 @@ public:
 
 class MuTorereState : public GameState {
 private:
-	int state;
+	int state_;
 
 public:
-	explicit MuTorereState(int state_) {
-		state = state_;
-		hash_ = std::hash<int>()(state);
+	explicit MuTorereState(int state) {
+		state_ = state;
+		hash_ = std::hash<int>()(state_);
 	}
 
 	string serialize() const override {
-		return to_string(state);
+		return to_string(state_);
 	}
 
 	static MuTorereState deserialize(const string &serialized_state) {
@@ -44,11 +44,11 @@ public:
 	}
 
 	int get() const {
-		return state;
+		return state_;
 	}
 
 	bool operator==(const GameState &rhs) const override {
-		return state == dynamic_cast<const MuTorereState &>(rhs).state;
+		return state_ == dynamic_cast<const MuTorereState &>(rhs).state_;
 	}
 };
 

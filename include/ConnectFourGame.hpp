@@ -20,16 +20,16 @@ public:
 
 class ConnectFourState : public GameState {
 private:
-	string state;
+	string state_;
 
 public:
-	explicit ConnectFourState(string state_) {
-		state = state_;
-		hash_ = std::hash<string>()(state);
+	explicit ConnectFourState(const string &state) {
+		state_ = state;
+		hash_ = std::hash<string>()(state_);
 	}
 
 	string serialize() const override {
-		return state;
+		return state_;
 	}
 
 	static ConnectFourState deserialize(const string &serialized_state) {
@@ -37,11 +37,11 @@ public:
 	}
 
 	string get() const {
-		return state;
+		return state_;
 	}
 
 	bool operator==(const GameState &rhs) const override {
-		return state == dynamic_cast<const ConnectFourState &>(rhs).state;
+		return state_ == dynamic_cast<const ConnectFourState &>(rhs).state_;
 	}
 };
 

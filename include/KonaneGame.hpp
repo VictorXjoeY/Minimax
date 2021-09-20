@@ -58,16 +58,16 @@ public:
 
 class KonaneState : public GameState {
 private:
-	long long state;
+	long long state_;
 
 public:
-	explicit KonaneState(long long state_) {
-		state = state_;
-		hash_ = std::hash<long long>()(state);
+	explicit KonaneState(long long state) {
+		state_ = state;
+		hash_ = std::hash<long long>()(state_);
 	}
 
 	string serialize() const override {
-		return to_string(state);
+		return to_string(state_);
 	}
 
 	static KonaneState deserialize(const string &serialized_state) {
@@ -75,11 +75,11 @@ public:
 	}
 
 	long long get() const {
-		return state;
+		return state_;
 	}
 
 	bool operator==(const GameState &rhs) const override {
-		return state == dynamic_cast<const KonaneState &>(rhs).state;
+		return state_ == dynamic_cast<const KonaneState &>(rhs).state_;
 	}
 };
 

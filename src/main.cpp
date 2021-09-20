@@ -438,24 +438,24 @@ MoveType get_ai_move(const GameType &game, Minimax<GameType> &ai, chrono::durati
 	printf("(%sscore = %.3lf" COLOR_WHITE " / %stime = %.3Lfs" COLOR_WHITE " / depth = %d) ", score_color.c_str(), ans.score, thinking_time_color.c_str(), t.count(), depth);
 
 	// Printing if the AI is playing optimally or not.
-	if (ans.is_solved) {
+	if (ans.winner.has_value()) {
 		printf("CPU is playing " COLOR_GREEN "optimally\n" COLOR_WHITE);
-
-		if (ans.winner.has_value()) {
-			if (ans.winner.value() != GameType::PLAYER_NONE) {
-				print_player<GameType>(ans.winner.value());
-				printf(" will " COLOR_GREEN "win" COLOR_WHITE " in at most %d moves\n", ans.turn - game.get_turn() - 1);
-			}
-			else {
-				printf("(The game will end in a " COLOR_YELLOW "draw" COLOR_WHITE " in at most %d moves)\n", ans.turn - game.get_turn() - 1);
-			}
+		
+		if (ans.winner.value() != GameType::PLAYER_NONE) {
+			print_player<GameType>(ans.winner.value());
+			printf(" will " COLOR_GREEN "win" COLOR_WHITE " in at most %d moves\n", ans.turn - game.get_turn() - 1);
 		}
 		else {
-			printf("(The game can go on forever!)\n");
+			printf("(The game will end in a " COLOR_YELLOW "draw" COLOR_WHITE " in at most %d moves)\n", ans.turn - game.get_turn() - 1);
 		}
 	}
 	else {
-		printf("CPU might be playing " COLOR_RED "non optimally\n" COLOR_WHITE);
+		if (ans.hits_cycle) {
+			printf("CPU is moving towards a cycle, " COLOR_YELLOW "the game can go on forever!\n" COLOR_WHITE);
+		}
+		else {
+			printf("CPU might be playing " COLOR_RED "non optimally\n" COLOR_WHITE);
+		}
 	}
 
 	printf("\n");

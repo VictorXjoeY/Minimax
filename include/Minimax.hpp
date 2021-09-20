@@ -14,7 +14,7 @@
 using namespace std;
 
 /* Minimax for games derived from Game class. */
-template <class GameType, class StateHash = hash<typename GameType::state_type>, class StateEqualTo = equal_to<typename GameType::state_type>>
+template <class GameType>
 class Minimax {
 public:
 	using StateType = typename GameType::state_type;
@@ -24,24 +24,18 @@ public:
 	public:
 		MoveType move = MoveType(); // The move itself
 		double score = 0.0; // [-1, +1]
-		bool is_solved = false; // True if one player can force a victory or if all states in this node's subtree have known results.
-		optional<int> winner = nullopt; // Did someone win? Who? Max, Min or Draw (including infinite loop)?
+		optional<int> winner = nullopt; // Is it solved? Who wins? Max, Min or Draw?
 		int turn = -1; // In which turn this move ends, relative to the start of the game.
-		int height = -1; // How many moves ahead will I explore after the current move?
+		bool pruned = false; // True if the other moves were not considered due to pruning, implying that the results in this OptimalMove are unreliable.
+		bool hits_cycle = false; // (CURRENTLY UNUSED) True if movement can end up hitting a previously seen game state.
 
 		OptimalMove() {}
 
-		OptimalMove(const MoveType &move_, double score_, bool is_solved_, optional<int> winner_, int turn_, int height_) {
-			#ifdef DEBUG
-			assert(static_cast<double>(GameType::PLAYER_MIN) <= score_ and score_ <= static_cast<double>(GameType::PLAYER_MAX));
-			#endif
-
+		OptimalMove(const MoveType &move_, double score_, optional<int> winner_, int turn_) {
 			move = move_;
 			score = score_;
-			is_solved = is_solved_;
 			winner = winner_;
 			turn = turn_;
-			height = height_;
 		}
 	};
 
@@ -55,30 +49,24 @@ private:
 			return a.score > b.score;
 		}
 
+		if (a.pruned != b.pruned) { // Prioritize reliable moves.
+			return a.pruned < b.pruned;
+		}
+
 		if (a.score == static_cast<double>(GameType::PLAYER_MAX)) { // Already won, so take the shortest path.
-			#ifdef DEBUG
-			assert(a.is_solved and b.is_solved); // Best score is only possible when it has been solved.
-			#endif
 			return a.turn < b.turn;
 		}
 
 		if (a.score == static_cast<double>(GameType::PLAYER_MIN)) { // Already lost, so take the longest path.
-			#ifdef DEBUG
-			assert(a.is_solved and b.is_solved); // Worst score is only possible when it has been solved.
-			#endif
 			return a.turn > b.turn;
 		}
 
-		if (a.is_solved == b.is_solved) { // Not a definitive victory or loss and both are solved/unsolved, so take the route which I'm most informed about.
-			return a.height > b.height;
-		}
-
 		if (a.score >= static_cast<double>(GameType::PLAYER_NONE)) { // Not losing, so prefer solved.
-			return a.is_solved > b.is_solved;
+			return a.winner.has_value() > b.winner.has_value();
 		}
 		
 		// Losing, so prefer unsolved.
-		return a.is_solved < b.is_solved;
+		return a.winner.has_value() < b.winner.has_value();
 	}
 
 	/* Returns true if A is a better move than B for PLAYER_MIN. */
@@ -87,45 +75,39 @@ private:
 			return a.score < b.score;
 		}
 
+		if (a.pruned != b.pruned) { // Prioritize reliable moves.
+			return a.pruned < b.pruned;
+		}
+
 		if (a.score == static_cast<double>(GameType::PLAYER_MIN)) { // Already won, so take the shortest path.
-			#ifdef DEBUG
-			assert(a.is_solved and b.is_solved); // Best score is only possible when it has been solved.
-			#endif
 			return a.turn < b.turn;
 		}
 
 		if (a.score == static_cast<double>(GameType::PLAYER_MAX)) { // Already lost, so take the longest path.
-			#ifdef DEBUG
-			assert(a.is_solved and b.is_solved); // Worst score is only possible when it has been solved.
-			#endif
 			return a.turn > b.turn;
 		}
 
-		if (a.is_solved == b.is_solved) { // Not a definitive victory or loss and both are solved/unsolved, so take the longest path.
-			return a.height > b.height;
-		}
-
 		if (a.score <= static_cast<double>(GameType::PLAYER_NONE)) { // Not losing, so prefer solved.
-			return a.is_solved > b.is_solved;
+			return a.winner.has_value() > b.winner.has_value();
 		}
 		
 		// Losing, so prefer unsolved.
-		return a.is_solved < b.is_solved;
+		return a.winner.has_value() < b.winner.has_value();
 	}
 
 	/* Recursive function that runs the Minimax algorithm with alpha-beta pruning. */
 	OptimalMove solve(double alpha, double beta, int height) {
 		// Leaf node.
 		if (game.is_game_over()) {
-			return OptimalMove(MoveType(), game.get_winner().value(), true, game.get_winner(), game.get_turn(), 0);
+			return OptimalMove(MoveType(), game.get_winner().value(), game.get_winner().value(), game.get_turn());
 		}
 
-		vector<MoveType> moves = game.get_moves();
+		const vector<MoveType> moves = game.get_moves();
 
 		// If we are too deep then evaluate the board.
 		if (height == 0) {
 			next_depth_move_count += moves.size();
-			return OptimalMove(moves[0], game.evaluate(), false, nullopt, game.get_turn(), 0);
+			return OptimalMove(moves[0], game.evaluate(), nullopt, game.get_turn());
 		}
 
 		previous_depths_move_count += moves.size();
@@ -134,9 +116,9 @@ private:
 		OptimalMove ans;
 		ans.score = 2.0 * game.get_enemy();
 
-		for (const MoveType &move : moves) {
+		for (int i = 0; i < moves.size(); i++) {
 			// Recurse.
-			game.make_move(move);
+			game.make_move(moves[i]);
 			OptimalMove ret = solve(alpha, beta, height - 1);
 			game.rollback();
 
@@ -147,7 +129,7 @@ private:
 				// Max.
 				if (better_max(ret, ans)) {
 					ans = ret;
-					ans.move = move;
+					ans.move = moves[i];
 				}
 			}
 			else if (game.get_player() == GameType::PLAYER_MIN) {
@@ -157,7 +139,7 @@ private:
 				// Min.
 				if (better_min(ret, ans)) {
 					ans = ret;
-					ans.move = move;
+					ans.move = moves[i];
 				}
 			}
 			else {
@@ -165,12 +147,10 @@ private:
 			}
 
 			if (alpha == static_cast<double>(GameType::PLAYER_MAX) or beta == static_cast<double>(GameType::PLAYER_MIN) or beta <= alpha) {
+				ans.pruned = ans.pruned or i < moves.size() - 1; // Pruned if not all moves were considered.
 				break;
 			}
 		}
-
-		// The current answer is solved if the chosen move goes to a solved state.
-		ans.height = height;
 
 		return ans;
 	}
@@ -210,7 +190,7 @@ public:
 
 			// Calculating total time elapsed so far.
 			total_time = chrono::high_resolution_clock::now() - get_move_start_time_point;
-		} while (!ans.is_solved and total_time + next_solve_time < 1.5 * timeout);
+		} while (!ans.winner.has_value() and total_time + next_solve_time < 1.5 * timeout);
 
 		// Returning optimal move.
 		return {ans, max_depth - 1};

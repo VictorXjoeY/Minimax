@@ -41,16 +41,16 @@ public:
 
 class TicTacToeState : public GameState {
 private:
-	int state;
+	int state_;
 
 public:
-	explicit TicTacToeState(int state_) {
-		state = state_;
-		hash_ = std::hash<int>()(state);
+	explicit TicTacToeState(int state) {
+		state_ = state;
+		hash_ = std::hash<int>()(state_);
 	}
 
 	string serialize() const override {
-		return to_string(state);
+		return to_string(state_);
 	}
 
 	static TicTacToeState deserialize(const string &serialized_state) {
@@ -58,11 +58,11 @@ public:
 	}
 
 	int get() const {
-		return state;
+		return state_;
 	}
 
 	bool operator==(const GameState &rhs) const override {
-		return state == dynamic_cast<const TicTacToeState &>(rhs).state;
+		return state_ == dynamic_cast<const TicTacToeState &>(rhs).state_;
 	}
 };
 

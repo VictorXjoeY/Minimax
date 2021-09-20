@@ -60,16 +60,16 @@ public:
 
 class BaghChalState : public GameState {
 private:
-	long long state;
+	long long state_;
 
 public:
-	explicit BaghChalState(long long state_) {
-		state = state_;
-		hash_ = std::hash<long long>()(state);
+	explicit BaghChalState(long long state) {
+		state_ = state;
+		hash_ = std::hash<long long>()(state_);
 	}
 
 	string serialize() const override {
-		return to_string(state);
+		return to_string(state_);
 	}
 
 	static BaghChalState deserialize(const string &serialized_state) {
@@ -77,11 +77,11 @@ public:
 	}
 
 	long long get() const {
-		return state;
+		return state_;
 	}
 
 	bool operator==(const GameState &rhs) const override {
-		return state == dynamic_cast<const BaghChalState &>(rhs).state;
+		return state_ == dynamic_cast<const BaghChalState &>(rhs).state_;
 	}
 };
 

@@ -24,7 +24,7 @@ public:
 /* Base class for Game states. */
 class GameState {
 protected:
-	optional<size_t> hash_;
+	optional<size_t> hash_ = nullopt;
 
 public:	
 	virtual ~GameState() = default;
