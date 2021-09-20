@@ -12,14 +12,8 @@ class BaghChalCell {
 public:
 	int x, y;
 
-	BaghChalCell() {
-		x = y = -1;
-	}
-
-	BaghChalCell(int x_, int y_) {
-		x = x_;
-		y = y_;
-	}
+	BaghChalCell() : x(-1), y(-1) {}
+	BaghChalCell(int x_, int y_) : x(x_), y(y_) {}
 
 	bool operator == (const BaghChalCell &c) const {
 		return x == c.x and y == c.y;
@@ -38,15 +32,8 @@ class BaghChalMove : public GameMove {
 public:
 	BaghChalCell ci, cf;
 
-	BaghChalMove() {
-		ci = cf = BaghChalCell();
-	}
-
-	BaghChalMove(BaghChalCell ci_, BaghChalCell cf_) {
-		ci = ci_;
-		cf = cf_;
-	}
-
+	BaghChalMove() : ci(BaghChalCell()), cf(BaghChalCell()) {}
+	BaghChalMove(BaghChalCell ci_, BaghChalCell cf_) : ci(ci_), cf(cf_) {}
 	BaghChalMove(int xi, int yi, int xf, int yf) : BaghChalMove(BaghChalCell(xi, yi), BaghChalCell(xf, yf)) {}
 
 	operator string() const override {

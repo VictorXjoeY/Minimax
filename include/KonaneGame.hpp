@@ -10,14 +10,8 @@ class KonaneCell {
 public:
 	int x, y;
 
-	KonaneCell() {
-		x = y = -1;
-	}
-
-	KonaneCell(int x_, int y_) {
-		x = x_;
-		y = y_;
-	}
+	KonaneCell() : x(-1), y(-1) {}
+	KonaneCell(int x_, int y_) : x(x_), y(y_) {}
 
 	bool operator == (const KonaneCell &c) const {
 		return x == c.x and y == c.y;
@@ -36,15 +30,8 @@ class KonaneMove : public GameMove {
 public:
 	KonaneCell ci, cf;
 
-	KonaneMove() {
-		ci = cf = KonaneCell();
-	}
-
-	KonaneMove(KonaneCell ci_, KonaneCell cf_) {
-		ci = ci_;
-		cf = cf_;
-	}
-
+	KonaneMove() : ci(KonaneCell()), cf(KonaneCell()) {}
+	KonaneMove(KonaneCell ci_, KonaneCell cf_) : ci(ci_), cf(cf_) {}
 	KonaneMove(int xi, int yi, int xf, int yf) : KonaneMove(KonaneCell(xi, yi), KonaneCell(xf, yf)) {}
 
 	operator string() const override {

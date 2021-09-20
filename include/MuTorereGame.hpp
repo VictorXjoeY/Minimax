@@ -12,13 +12,8 @@ class MuTorereMove : public GameMove {
 public:
 	int pos;
 
-	MuTorereMove() {
-		pos = -1;
-	}
-
-	MuTorereMove(int pos_) {
-		pos = pos_;
-	}
+	MuTorereMove() : pos(-1) {}
+	MuTorereMove(int pos_) : pos(pos_) {}
 
 	operator string() const override {
 		return "(" + to_string(pos) + ")";
