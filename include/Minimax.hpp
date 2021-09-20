@@ -46,11 +46,6 @@ public:
 	};
 
 private:
-	static constexpr int DP_RESERVE = 1024 * 1024 * 1024 / (sizeof(StateType) + sizeof(OptimalMove)); // 1GB for dp
-	static constexpr int IN_STACK_RESERVE = 1024 * 1024 / sizeof(StateType); // 1MB for in_stack
-
-	unordered_map<StateType, OptimalMove> dp; // Dynamic Programming for already seen game states.
-	unordered_set<StateType> in_stack; // Cycle detection.
 	GameType game; // Game.
 	long long previous_depths_move_count, next_depth_move_count; // Used for estimating the time cost of Minimax::solve
 
@@ -127,18 +122,6 @@ private:
 
 		vector<MoveType> moves = game.get_moves();
 
-		// If we are trying to calculate a state which is still open (in stack) we have hit a cycle and we return 0.
-		if (in_stack.count(game.get_state())) {
-			return OptimalMove(moves[0], GameType::PLAYER_NONE, true, nullopt, numeric_limits<int>::max(), 0); // is_solved is true because there are no more possibilities for this "subtree".
-		}
-
-		// If we are trying to calculate a state which was explored further than it will be explored now then return its value.
-		OptimalMove &ans = dp[game.get_state()];
-
-		if (ans.is_solved or ans.height >= height) {
-			return ans;
-		}
-
 		// If we are too deep then evaluate the board.
 		if (height == 0) {
 			next_depth_move_count += moves.size();
@@ -147,10 +130,8 @@ private:
 
 		previous_depths_move_count += moves.size();
 
-		// Marking the state as open.
-		in_stack.insert(game.get_state());
-
 		// Initializing with worst possible score.
+		OptimalMove ans;
 		ans.score = 2.0 * game.get_enemy();
 
 		for (const MoveType &move : moves) {
@@ -188,20 +169,13 @@ private:
 			}
 		}
 
-		// Marking the state as closed.
-		in_stack.erase(game.get_state());
-
 		// The current answer is solved if the chosen move goes to a solved state.
 		ans.height = height;
 
 		return ans;
 	}
 public:
-	Minimax() {
-		dp.reserve(DP_RESERVE);
-		in_stack.reserve(IN_STACK_RESERVE);
-	}
-
+	Minimax() = default;
 	~Minimax() = default;
 
 	/* Returns the best move obtained with minimax given a time limit in milliseconds. */
@@ -216,14 +190,6 @@ public:
 		// Initializing.
 		int max_depth = 0;
 		game = game_;
-
-		// Filling in_stack with states that were already seen.
-		for (const StateType &state : game.get_states()) {
-			in_stack.insert(state);
-		}
-
-		// But not the current state.
-		in_stack.erase(game.get_state());
 
 		// Iterative Deepening Search.
 		do {
@@ -245,9 +211,6 @@ public:
 			// Calculating total time elapsed so far.
 			total_time = chrono::high_resolution_clock::now() - get_move_start_time_point;
 		} while (!ans.is_solved and total_time + next_solve_time < 1.5 * timeout);
-
-		// Let's not blow up my memory.
-		dp.clear();
 
 		// Returning optimal move.
 		return {ans, max_depth - 1};
