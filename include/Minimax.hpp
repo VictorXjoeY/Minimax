@@ -244,7 +244,7 @@ public:
 
 			// Calculating total time elapsed so far.
 			total_time = chrono::high_resolution_clock::now() - get_move_start_time_point;
-		} while (!ans.is_solved and total_time + next_solve_time < 2.0 * timeout);
+		} while (!ans.is_solved and total_time + next_solve_time < 1.5 * timeout);
 
 		// Let's not blow up my memory.
 		dp.clear();
