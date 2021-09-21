@@ -211,8 +211,7 @@ int ConnectFourGame::get_winner_() const {
 /* Returns a value between -1 and 1 indicating how probable it is for the first player to win (1.0) or the other player to win (-1.0). */
 double ConnectFourGame::evaluate_() const {
 	int score = get_score_(YELLOW) - get_score_(RED);
-	score += get_player() == YELLOW ? 2 : -2; // Giving a 2 points advantage to the current player.
-	return score / static_cast<double>(MAX_SCORE + 2);
+	return score / static_cast<double>(MAX_SCORE);
 }
 
 /* ---------- PUBLIC ---------- */
