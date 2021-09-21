@@ -162,7 +162,7 @@ public:
 	pair<OptimalMove, int> get_move(const GameType &game_, chrono::duration<long double> timeout) {
 		chrono::time_point<chrono::high_resolution_clock> get_move_start_time_point, previous_solve_start_time_point;
 		chrono::duration<long double> total_time, last_solve_time, next_solve_time;
-		OptimalMove ans;
+		OptimalMove prev_ans, cur_ans;
 
 		// Timing.
 		get_move_start_time_point = chrono::high_resolution_clock::now();
@@ -176,7 +176,8 @@ public:
 			// Calling solve.
 			previous_solve_start_time_point = chrono::high_resolution_clock::now();
 			previous_depths_move_count = next_depth_move_count = 0;
-			ans = solve(2.0 * GameType::PLAYER_MIN, 2.0 * GameType::PLAYER_MAX, max_depth++);
+			prev_ans = cur_ans;
+			cur_ans = solve(2.0 * GameType::PLAYER_MIN, 2.0 * GameType::PLAYER_MAX, max_depth++);
 			last_solve_time = chrono::high_resolution_clock::now() - previous_solve_start_time_point;
 
 			// Predicting how much it will take for another solve call.
@@ -190,9 +191,14 @@ public:
 
 			// Calculating total time elapsed so far.
 			total_time = chrono::high_resolution_clock::now() - get_move_start_time_point;
-		} while (!ans.winner.has_value() and total_time + next_solve_time < 1.5 * timeout);
+		} while (!cur_ans.winner.has_value() and total_time + next_solve_time < 1.5 * timeout);
+
+		// Optimal move in case of a loss.
+		if (cur_ans.winner.has_value() and cur_ans.winner.value() == game.get_enemy() and max_depth > 1) {
+			cur_ans.move = prev_ans.move;
+		}
 
 		// Returning optimal move.
-		return {ans, max_depth - 1};
+		return {cur_ans, max_depth - 1};
 	}
 };
