@@ -7,7 +7,7 @@ Generic [Minimax](https://en.wikipedia.org/wiki/Minimax) algorithm for 2 player 
 - [Connect Four](https://en.wikipedia.org/wiki/Connect_Four)
 
 # Instructions
-I am using C++17 so your `g++` version should be at least 7.0 to support the features that I am using!
+I am using C++17 so your `g++` version should be at least 7.0!
 
 ## Linux/Mac
 ### Prerequisites
@@ -54,6 +54,5 @@ g++ --version
 - Works for games with cycles.
 - Works for games that can tie.
 - Takes the shortest path for the win, but the longest path for the loss.
-- Uses around 1.2GB of RAM.
 - The AI takes at least `TIMEOUT` milliseconds to play.
 - It currently does not work for games with imperfect information or chance elements (dice/card games). I'll probably code that in another project.
